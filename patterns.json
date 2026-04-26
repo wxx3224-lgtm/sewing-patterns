@@ -1,0 +1,364 @@
+{
+  "version": "1.0",
+  "updated": "2026-04-26",
+  "total": 27,
+  "patterns": [
+    {
+      "id": "fs-aaron",
+      "name": "Aaron A-shirt",
+      "category": "上衣",
+      "description": "基础A字背心",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/aaron",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-albert",
+      "name": "Albert 围裙",
+      "category": "家居",
+      "description": "经典围裙，含口袋和绑带",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/albert",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-bella",
+      "name": "Bella 女装原型",
+      "category": "版型基础",
+      "description": "女装合体上衣原型，含胸省腰省",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/bella",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-breanna",
+      "name": "Breanna 女装原型",
+      "category": "版型基础",
+      "description": "女装宽松上衣原型",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/breanna",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-bruce",
+      "name": "Bruce 拳击短裤",
+      "category": "裤装",
+      "description": "男士拳击短裤",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/bruce",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-charlie",
+      "name": "Charlie 休闲裤",
+      "category": "裤装",
+      "description": "五袋休闲长裤",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/charlie",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-diana",
+      "name": "Diana 连衣裙",
+      "category": "连衣裙",
+      "description": "裹身连衣裙",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/diana",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-florence",
+      "name": "Florence 口罩",
+      "category": "配饰",
+      "description": "立体口罩",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/florence",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-hortensia",
+      "name": "Hortensia 手提包",
+      "category": "包袋",
+      "description": "拉链手提包，含侧片和底片",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/hortensia",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-hugo",
+      "name": "Hugo 连帽衫",
+      "category": "上衣",
+      "description": "连帽卫衣，含插肩袖",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/hugo",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-lucy",
+      "name": "Lucy 口袋裙",
+      "category": "裙装",
+      "description": "系带口袋裙",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/lucy",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-penelope",
+      "name": "Penelope 铅笔裙",
+      "category": "裙装",
+      "description": "高腰铅笔裙",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/penelope",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-sandy",
+      "name": "Sandy 圆裙",
+      "category": "裙装",
+      "description": "圆裙/半圆裙",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/sandy",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-simon",
+      "name": "Simon 衬衫",
+      "category": "上衣",
+      "description": "经典男士衬衫",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/simon",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-sven",
+      "name": "Sven 卫衣",
+      "category": "上衣",
+      "description": "圆领卫衣",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/sven",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-tamiko",
+      "name": "Tamiko 上衣",
+      "category": "上衣",
+      "description": "零浪费T恤",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/tamiko",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-teagan",
+      "name": "Teagan T恤",
+      "category": "上衣",
+      "description": "基础合体T恤",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/teagan",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-titan",
+      "name": "Titan 裤装原型",
+      "category": "版型基础",
+      "description": "裤装基础原型",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/titan",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-wahid",
+      "name": "Wahid 马甲",
+      "category": "上衣",
+      "description": "经典西装马甲",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/wahid",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "fs-yuri",
+      "name": "Yuri 连帽衫",
+      "category": "上衣",
+      "description": "拉链连帽衫",
+      "source": "FreeSewing (MIT License)",
+      "url": "https://freesewing.eu/designs/yuri",
+      "difficulty": "unknown"
+    },
+    {
+      "id": "cn-tote-basic",
+      "name": "基础托特包",
+      "category": "包袋",
+      "description": "日常手提包 36×38cm",
+      "source": "通用布艺教程",
+      "pieces": [
+        {
+          "label": "包身",
+          "qty": 2,
+          "w": 36,
+          "h": 38
+        },
+        {
+          "label": "提手",
+          "qty": 2,
+          "w": 6,
+          "h": 50
+        },
+        {
+          "label": "包底",
+          "qty": 1,
+          "w": 36,
+          "h": 12
+        }
+      ]
+    },
+    {
+      "id": "cn-drawstring",
+      "name": "束口袋",
+      "category": "包袋",
+      "description": "化妆品收纳 22×30cm",
+      "source": "通用布艺教程",
+      "pieces": [
+        {
+          "label": "袋身",
+          "qty": 2,
+          "w": 22,
+          "h": 30
+        },
+        {
+          "label": "穿绳通道",
+          "qty": 2,
+          "w": 22,
+          "h": 4
+        }
+      ]
+    },
+    {
+      "id": "cn-a5-cover",
+      "name": "A5手账本套",
+      "category": "书衣",
+      "description": "展开34×24cm",
+      "source": "小红书手作教程",
+      "pieces": [
+        {
+          "label": "外布",
+          "qty": 1,
+          "w": 34,
+          "h": 24
+        },
+        {
+          "label": "内布",
+          "qty": 1,
+          "w": 34,
+          "h": 24
+        },
+        {
+          "label": "翻盖插片",
+          "qty": 2,
+          "w": 8,
+          "h": 24
+        }
+      ]
+    },
+    {
+      "id": "cn-a6-cover",
+      "name": "A6手账本套",
+      "category": "书衣",
+      "description": "展开26×18cm",
+      "source": "小红书手作教程",
+      "pieces": [
+        {
+          "label": "外布",
+          "qty": 1,
+          "w": 26,
+          "h": 18
+        },
+        {
+          "label": "内布",
+          "qty": 1,
+          "w": 26,
+          "h": 18
+        },
+        {
+          "label": "翻盖插片",
+          "qty": 2,
+          "w": 6,
+          "h": 18
+        }
+      ]
+    },
+    {
+      "id": "cn-apron",
+      "name": "家用围裙",
+      "category": "家居",
+      "description": "上宽50→下宽70 长80cm",
+      "source": "通用布艺教程",
+      "pieces": [
+        {
+          "label": "围裙身",
+          "qty": 1,
+          "w": 70,
+          "h": 80
+        },
+        {
+          "label": "口袋",
+          "qty": 1,
+          "w": 20,
+          "h": 18
+        },
+        {
+          "label": "腰带",
+          "qty": 2,
+          "w": 4,
+          "h": 70
+        },
+        {
+          "label": "颈带",
+          "qty": 1,
+          "w": 4,
+          "h": 60
+        }
+      ]
+    },
+    {
+      "id": "cn-placemat",
+      "name": "餐垫",
+      "category": "家居",
+      "description": "45×32cm 圆角",
+      "source": "通用布艺教程",
+      "pieces": [
+        {
+          "label": "餐垫",
+          "qty": 1,
+          "w": 45,
+          "h": 32
+        }
+      ]
+    },
+    {
+      "id": "cn-cushion",
+      "name": "信封式靠垫套",
+      "category": "家居",
+      "description": "45×45cm",
+      "source": "通用布艺教程",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 1,
+          "w": 45,
+          "h": 45
+        },
+        {
+          "label": "后片A",
+          "qty": 1,
+          "w": 45,
+          "h": 28
+        },
+        {
+          "label": "后片B",
+          "qty": 1,
+          "w": 45,
+          "h": 28
+        }
+      ]
+    }
+  ]
+}

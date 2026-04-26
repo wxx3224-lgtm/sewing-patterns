@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>缝纫裁片图纸生成工具</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;background:#fdf2f4;min-height:100vh}
+.wrap{display:flex;min-height:100vh}
+aside{width:300px;background:#fff;border-right:1px solid #f5d5d9;padding:16px;display:flex;flex-direction:column;gap:12px;flex-shrink:0;overflow-y:auto;max-height:100vh}
+aside h1{font-size:17px;font-weight:600;color:#9d4c5a;letter-spacing:1px}
+.tabs{display:flex;gap:0;border:1px solid #f0c4ca;border-radius:8px;overflow:hidden}
+.tab{flex:1;padding:7px 0;text-align:center;font-size:12px;cursor:pointer;background:#fff;color:#999;border:none;transition:all .15s}
+.tab.active{background:#fff0f3;color:#c27185;font-weight:600}
+.tab-panel{display:none;flex-direction:column;gap:8px;flex:1;overflow-y:auto}
+.tab-panel.show{display:flex}
+.ctrl-row{display:flex;gap:8px;align-items:flex-end}
+.ctrl-row>div{flex:1}
+label{display:block;font-size:12px;color:#888;margin-bottom:3px}
+input[type=number],select,input[type=text]{width:100%;border:1px solid #f0c4ca;border-radius:8px;padding:6px 10px;font-size:13px;outline:none;background:#fff}
+input:focus,select:focus{border-color:#d4889a;box-shadow:0 0 0 3px rgba(212,136,154,.15)}
+.cat-title{font-size:12px;color:#b5838d;font-weight:600;margin:8px 0 4px;padding-left:2px;letter-spacing:.5px;cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px}
+.cat-title::before{content:'▸';font-size:10px;transition:transform .2s;display:inline-block}
+.cat-title.open::before{transform:rotate(90deg)}
+.cat-items{display:none;flex-direction:column;gap:4px;padding-left:2px}
+.cat-items.show{display:flex}
+.tpl-card{cursor:pointer;border:1px solid #f5d5d9;border-radius:8px;padding:7px 10px;transition:all .15s}
+.tpl-card:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.tpl-card.active{border-color:#c27185;background:#fff0f3}
+.tpl-name{font-size:12px;font-weight:500;color:#444}
+.tpl-desc{font-size:10px;color:#aaa;margin-top:1px}
+.lib-card{border:1px solid #f0e0e3;border-radius:8px;padding:8px 10px}
+.lib-card .lib-name{font-size:12px;font-weight:500;color:#444}
+.lib-card .lib-meta{font-size:10px;color:#aaa;margin-top:2px}
+.lib-card .lib-src{font-size:9px;color:#c9a;margin-top:2px}
+.lib-badge{display:inline-block;font-size:9px;background:#f5e6e9;color:#b5838d;padding:1px 6px;border-radius:4px;margin-right:4px}
+.btn-row{display:flex;gap:8px;margin-top:auto;padding-top:8px;flex-shrink:0}
+.btn{flex:1;border:none;border-radius:8px;padding:10px 0;font-size:13px;font-weight:500;cursor:pointer;transition:background .2s}
+.btn-print{background:#d4889a;color:#fff}.btn-print:hover{background:#c27185}
+.btn-reset{background:#f5e6e9;color:#9d4c5a}.btn-reset:hover{background:#f0d4da}
+main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
+#canvas-wrap{background:#fff;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.04);border:1px solid #f5d5d9;padding:20px;display:inline-block}
+@media print{
+  aside,.no-print{display:none!important}
+  body{background:#fff!important;margin:0;padding:0}
+  .wrap{display:block}
+  main{padding:5mm;display:block}
+  #canvas-wrap{border:none!important;box-shadow:none!important;margin:0!important;padding:0!important;border-radius:0!important}
+  #svgCanvas{width:auto!important;height:auto!important}
+  @page{size:A4;margin:8mm}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="no-print">
+    <h1>🧵 裁片图纸工具</h1>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('local')">内置模板</div>
+      <div class="tab" onclick="switchTab('online')">在线纸样库</div>
+    </div>
+
+    <!-- 内置模板面板 -->
+    <div id="panelLocal" class="tab-panel show">
+      <div class="ctrl-row">
+        <div><label>缝份 (cm)</label><input id="seamInput" type="number" value="1.5" min="0" max="5" step="0.1"/></div>
+        <div><label>预览缩放</label><select id="scaleInput"><option value="3">小</option><option value="4" selected>中</option><option value="6">大</option></select></div>
+      </div>
+      <div>
+        <label><input type="checkbox" id="printMode" style="margin-right:4px"/>打印模式 (1:1 真实尺寸)</label>
+        <p style="font-size:10px;color:#aaa;margin-top:2px">勾选后图纸按实际cm尺寸输出，打印时请选100%不缩放</p>
+      </div>
+      <div id="templateList" style="flex:1;overflow-y:auto"></div>
+    </div>
+
+    <!-- 在线纸样库面板 -->
+    <div id="panelOnline" class="tab-panel">
+      <input type="text" id="libSearch" placeholder="搜索纸样名称或分类..." style="margin-bottom:4px"/>
+      <div id="libStatus" style="font-size:10px;color:#aaa"></div>
+      <div id="libList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-reset" onclick="document.getElementById('seamInput').value='1.5';draw()">重置缝份</button>
+      <button class="btn btn-print" onclick="document.getElementById('printMode').checked=true;draw();setTimeout(()=>window.print(),100)">🖨️ 打印</button>
+    </div>
+  </aside>
+  <main><div id="canvas-wrap"><svg id="svgCanvas" xmlns="http://www.w3.org/2000/svg"></svg></div></main>
+</div>
+<script>
+const PROJECTS=[
+{cat:'👗 女装成衣',items:[
+  {name:'基础T恤',desc:'前片+后片+袖×2+领口条',pieces:[
+    {label:'前片',qty:1,nw:48,nh:62,path:'M0,14 Q0,0 14,0 L42,0 Q48,0 48,6 L48,58 Q48,62 46,62 L34,62 Q24,59 14,62 L2,62 Q0,62 0,58 Z',notes:'半胸围48 衣长62'},
+    {label:'后片',qty:1,nw:48,nh:64,path:'M0,8 Q0,0 8,0 L40,0 Q48,0 48,8 L48,60 Q48,64 46,64 L2,64 Q0,64 0,60 Z',notes:'半胸围48 后中长64'},
+    {label:'袖片',qty:2,nw:38,nh:58,path:'M0,16 Q11,0 19,-2 Q27,0 38,16 L35,58 L3,58 Z',notes:'袖山高16 袖长58'},
+    {label:'领口条',qty:1,nw:50,nh:4,path:'M0,0 L50,0 L50,4 L0,4 Z',notes:'长50 宽4 (弹力布)'},
+  ]},
+  {name:'泡泡袖上衣',desc:'前片+后片+泡泡袖×2',pieces:[
+    {label:'前片',qty:1,nw:46,nh:55,path:'M0,14 Q0,0 14,0 L40,0 Q46,0 46,6 L46,51 Q46,55 44,55 L2,55 Q0,55 0,51 Z',notes:'半胸围46 衣长55'},
+    {label:'后片',qty:1,nw:46,nh:57,path:'M0,8 Q0,0 8,0 L38,0 Q46,0 46,8 L46,53 Q46,57 44,57 L2,57 Q0,57 0,53 Z',notes:'半胸围46 后中长57'},
+    {label:'泡泡袖',qty:2,nw:44,nh:28,path:'M0,12 Q11,-4 22,-4 Q33,-4 44,12 L48,28 Q22,34 -4,28 Z',notes:'袖山高12 袖长28'},
+  ]},
+  {name:'插肩袖T恤',desc:'前片+后片(含袖一体)',pieces:[
+    {label:'前片(含袖)',qty:1,nw:68,nh:65,path:'M0,0 L68,0 L68,30 L50,30 L50,61 Q50,65 48,65 L20,65 Q18,65 18,61 L18,30 L0,30 Z',notes:'含袖展开宽68 衣长65'},
+    {label:'后片(含袖)',qty:1,nw:68,nh:67,path:'M0,0 L68,0 L68,30 L50,30 L50,63 Q50,67 48,67 L20,67 Q18,67 18,63 L18,30 L0,30 Z',notes:'含袖展开宽68 后中长67'},
+    {label:'领口罗纹',qty:1,nw:44,nh:4,path:'M0,0 L44,0 L44,4 L0,4 Z',notes:'长44 宽4'},
+  ]},
+  {name:'A字裙',desc:'前裙片+后裙片+腰头',pieces:[
+    {label:'前裙片',qty:1,nw:52,nh:60,path:'M9,0 L43,0 L52,60 L0,60 Z',notes:'腰宽34 摆宽52 裙长60'},
+    {label:'后裙片',qty:1,nw:52,nh:60,path:'M9,0 L43,0 L52,60 L0,60 Z',notes:'腰宽34 摆宽52 裙长60'},
+    {label:'腰头',qty:1,nw:70,nh:8,path:'M0,0 L70,0 L70,8 L0,8 Z',notes:'腰围70 宽8(对折4)'},
+  ]},
+  {name:'直筒裙',desc:'前裙片+后裙片+腰头',pieces:[
+    {label:'前裙片',qty:1,nw:46,nh:65,path:'M2,0 L44,0 L46,65 L0,65 Z',notes:'半臀围46 裙长65'},
+    {label:'后裙片',qty:1,nw:46,nh:65,path:'M2,0 L44,0 L46,65 L0,65 Z',notes:'半臀围46 裙长65'},
+    {label:'腰头',qty:1,nw:68,nh:8,path:'M0,0 L68,0 L68,8 L0,8 Z',notes:'腰围68 宽8(对折4)'},
+  ]},
+  {name:'直筒裤',desc:'前片×2+后片×2+腰头',pieces:[
+    {label:'裤前片',qty:2,nw:42,nh:100,path:'M0,0 L30,0 L30,38 L42,48 L42,100 L-6,100 L-6,48 L0,38 Z',notes:'半腰围30 裤长100'},
+    {label:'裤后片',qty:2,nw:47,nh:100,path:'M0,0 L32,0 L32,36 L47,48 L47,100 L-8,100 L-8,48 L0,36 Z',notes:'半臀围32 裤长100'},
+    {label:'腰头',qty:1,nw:72,nh:8,path:'M0,0 L72,0 L72,8 L0,8 Z',notes:'腰围72 宽8(对折4)'},
+  ]},
+  {name:'五分阔腿裤',desc:'前片×2+后片×2+腰头',pieces:[
+    {label:'裤前片',qty:2,nw:44,nh:55,path:'M0,0 L34,0 L34,20 L44,28 L44,55 L-6,55 L-6,28 L0,20 Z',notes:'半臀围34 裤长55'},
+    {label:'裤后片',qty:2,nw:48,nh:55,path:'M0,0 L36,0 L36,18 L48,28 L48,55 L-8,55 L-8,28 L0,18 Z',notes:'半臀围36 裤长55'},
+    {label:'腰头',qty:1,nw:72,nh:10,path:'M0,0 L72,0 L72,10 L0,10 Z',notes:'腰围72 宽10(含松紧通道)'},
+  ]},
+  {name:'连衣裙',desc:'前片+后片+袖×2+腰带',pieces:[
+    {label:'前片',qty:1,nw:48,nh:90,path:'M0,14 Q0,0 14,0 L42,0 Q48,0 48,6 L48,34 Q47,38 45,40 L50,90 L-2,90 L3,40 Q1,38 0,34 Z',notes:'胸围48 全长90'},
+    {label:'后片',qty:1,nw:48,nh:92,path:'M0,8 Q0,0 8,0 L40,0 Q48,0 48,8 L48,36 Q47,40 45,42 L50,92 L-2,92 L3,42 Q1,40 0,36 Z',notes:'胸围48 后中长92'},
+    {label:'袖片',qty:2,nw:36,nh:50,path:'M0,14 Q10,0 18,-2 Q26,0 36,14 L33,50 L3,50 Z',notes:'袖山高14 袖长50'},
+    {label:'腰带',qty:1,nw:74,nh:6,path:'M0,0 L74,0 L74,6 L0,6 Z',notes:'长74 宽6'},
+  ]},
+]},
+{cat:'👜 包袋与收纳',items:[
+  {name:'托特包',desc:'包身×2+提手×2+包底',pieces:[
+    {label:'包身',qty:2,nw:36,nh:38,path:'M0,0 L36,0 L36,38 L0,38 Z',notes:'宽36 高38'},
+    {label:'提手',qty:2,nw:6,nh:50,path:'M0,0 L6,0 L6,50 L0,50 Z',notes:'宽6(对折3) 长50'},
+    {label:'包底',qty:1,nw:36,nh:12,path:'M0,0 L36,0 L36,12 L0,12 Z',notes:'宽36 深12'},
+  ]},
+  {name:'束口袋',desc:'袋身×2+穿绳通道×2',pieces:[
+    {label:'袋身',qty:2,nw:22,nh:30,path:'M0,0 L22,0 L22,30 Q11,34 0,30 Z',notes:'宽22 高30'},
+    {label:'穿绳通道',qty:2,nw:22,nh:4,path:'M0,0 L22,0 L22,4 L0,4 Z',notes:'宽22 高4'},
+  ]},
+  {name:'拉链化妆包',desc:'表布+里布+拉链挡布',pieces:[
+    {label:'表布',qty:1,nw:24,nh:16,path:'M2,0 L22,0 Q24,0 24,2 L24,14 Q24,16 22,16 L2,16 Q0,16 0,14 L0,2 Q0,0 2,0 Z',notes:'宽24 高16 圆角'},
+    {label:'里布',qty:1,nw:24,nh:16,path:'M0,0 L24,0 L24,16 L0,16 Z',notes:'宽24 高16'},
+    {label:'拉链挡布',qty:2,nw:3,nh:16,path:'M0,0 L3,0 L3,16 L0,16 Z',notes:'宽3 高16'},
+  ]},
+  {name:'多功能卡包',desc:'外皮+内卡位×3+零钱袋',pieces:[
+    {label:'外皮',qty:1,nw:22,nh:16,path:'M0,0 L22,0 L22,16 L0,16 Z',notes:'展开22×16 对折11×16'},
+    {label:'卡位',qty:3,nw:10,nh:8,path:'M0,0 L10,0 L10,8 L0,8 Z',notes:'宽10 高8'},
+    {label:'零钱袋',qty:1,nw:10,nh:10,path:'M0,0 L10,0 L10,10 L0,10 Z',notes:'宽10 高10 拉链口'},
+  ]},
+  {name:'单肩斜挎包',desc:'包身+翻盖+肩带+内袋',pieces:[
+    {label:'包身',qty:2,nw:26,nh:20,path:'M0,0 L26,0 L26,20 L0,20 Z',notes:'宽26 高20'},
+    {label:'翻盖',qty:1,nw:26,nh:12,path:'M0,0 L26,0 L26,12 Q13,15 0,12 Z',notes:'宽26 高12 弧形底'},
+    {label:'肩带',qty:1,nw:4,nh:120,path:'M0,0 L4,0 L4,120 L0,120 Z',notes:'宽4 长120(可调)'},
+    {label:'内袋',qty:1,nw:22,nh:14,path:'M0,0 L22,0 L22,14 L0,14 Z',notes:'宽22 高14'},
+  ]},
+  {name:'购物袋',desc:'袋身×2+提手×2',pieces:[
+    {label:'袋身',qty:2,nw:40,nh:45,path:'M0,0 L40,0 L40,45 L0,45 Z',notes:'宽40 高45'},
+    {label:'提手',qty:2,nw:6,nh:40,path:'M0,0 L6,0 L6,40 L0,40 Z',notes:'宽6 长40'},
+  ]},
+]},
+{cat:'📒 手账本套与书衣',items:[
+  {name:'A5手账本套',desc:'外布+内布+书签带',pieces:[
+    {label:'外布',qty:1,nw:34,nh:24,path:'M0,0 L34,0 L34,24 L0,24 Z',notes:'展开宽34 高24'},
+    {label:'内布',qty:1,nw:34,nh:24,path:'M0,0 L34,0 L34,24 L0,24 Z',notes:'展开宽34 高24'},
+    {label:'翻盖插片',qty:2,nw:8,nh:24,path:'M0,0 L8,0 L8,24 L0,24 Z',notes:'宽8 高24'},
+    {label:'书签带',qty:1,nw:1,nh:30,path:'M0,0 L1,0 L1,30 L0,30 Z',notes:'宽1 长30'},
+  ]},
+  {name:'A6手账本套',desc:'外布+内布+翻盖插片',pieces:[
+    {label:'外布',qty:1,nw:26,nh:18,path:'M0,0 L26,0 L26,18 L0,18 Z',notes:'展开宽26 高18'},
+    {label:'内布',qty:1,nw:26,nh:18,path:'M0,0 L26,0 L26,18 L0,18 Z',notes:'展开宽26 高18'},
+    {label:'翻盖插片',qty:2,nw:6,nh:18,path:'M0,0 L6,0 L6,18 L0,18 Z',notes:'宽6 高18'},
+  ]},
+  {name:'B6手账包',desc:'外布+内布+拉链口袋',pieces:[
+    {label:'外布',qty:1,nw:30,nh:21,path:'M0,0 L30,0 L30,21 L0,21 Z',notes:'展开宽30 高21'},
+    {label:'内布',qty:1,nw:30,nh:21,path:'M0,0 L30,0 L30,21 L0,21 Z',notes:'展开宽30 高21'},
+    {label:'拉链口袋',qty:1,nw:14,nh:12,path:'M0,0 L14,0 L14,12 L0,12 Z',notes:'宽14 高12'},
+  ]},
+  {name:'笔袋',desc:'表布+里布+拉链',pieces:[
+    {label:'表布',qty:1,nw:20,nh:16,path:'M2,0 L18,0 Q20,0 20,2 L20,14 Q20,16 18,16 L2,16 Q0,16 0,14 L0,2 Q0,0 2,0 Z',notes:'宽20 展开高16'},
+    {label:'里布',qty:1,nw:20,nh:16,path:'M0,0 L20,0 L20,16 L0,16 Z',notes:'宽20 展开高16'},
+  ]},
+  {name:'平板电脑套',desc:'外布+内衬+翻盖',pieces:[
+    {label:'外布',qty:1,nw:22,nh:30,path:'M2,0 L20,0 Q22,0 22,2 L22,28 Q22,30 20,30 L2,30 Q0,30 0,28 L0,2 Q0,0 2,0 Z',notes:'宽22 高30'},
+    {label:'内衬',qty:1,nw:22,nh:30,path:'M0,0 L22,0 L22,30 L0,30 Z',notes:'宽22 高30'},
+    {label:'翻盖',qty:1,nw:22,nh:8,path:'M0,0 L22,0 L22,8 L0,8 Z',notes:'宽22 高8'},
+  ]},
+]},
+{cat:'🏠 家居布艺',items:[
+  {name:'围裙套装',desc:'围裙身+口袋+腰带+颈带',pieces:[
+    {label:'围裙身',qty:1,nw:70,nh:80,path:'M10,0 L60,0 L70,20 L70,80 L0,80 L0,20 Z',notes:'上宽50 下宽70 长80'},
+    {label:'口袋',qty:1,nw:20,nh:18,path:'M0,0 L20,0 L20,18 L0,18 Z',notes:'宽20 高18'},
+    {label:'腰带',qty:2,nw:4,nh:70,path:'M0,0 L4,0 L4,70 L0,70 Z',notes:'宽4 长70'},
+    {label:'颈带',qty:1,nw:4,nh:60,path:'M0,0 L4,0 L4,60 L0,60 Z',notes:'宽4 长60'},
+  ]},
+  {name:'餐垫套装',desc:'餐垫+杯垫',pieces:[
+    {label:'餐垫',qty:1,nw:45,nh:32,path:'M3,0 L42,0 Q45,0 45,3 L45,29 Q45,32 42,32 L3,32 Q0,32 0,29 L0,3 Q0,0 3,0 Z',notes:'宽45 高32 圆角'},
+    {label:'方形杯垫',qty:1,nw:10,nh:10,path:'M0,0 L10,0 L10,10 L0,10 Z',notes:'边长10'},
+    {label:'圆形杯垫',qty:1,nw:10,nh:10,path:'M5,0 A5,5 0 1,1 5,10 A5,5 0 1,1 5,0 Z',notes:'直径10'},
+  ]},
+  {name:'靠垫套',desc:'前片+后片(信封式)',pieces:[
+    {label:'前片',qty:1,nw:45,nh:45,path:'M0,0 L45,0 L45,45 L0,45 Z',notes:'边长45'},
+    {label:'后片A',qty:1,nw:45,nh:28,path:'M0,0 L45,0 L45,28 L0,28 Z',notes:'宽45 高28(含重叠)'},
+    {label:'后片B',qty:1,nw:45,nh:28,path:'M0,0 L45,0 L45,28 L0,28 Z',notes:'宽45 高28(含重叠)'},
+  ]},
+  {name:'针插',desc:'表布+底布+填充',pieces:[
+    {label:'表布(圆)',qty:1,nw:12,nh:12,path:'M6,0 A6,6 0 1,1 6,12 A6,6 0 1,1 6,0 Z',notes:'直径12'},
+    {label:'底布(圆)',qty:1,nw:10,nh:10,path:'M5,0 A5,5 0 1,1 5,10 A5,5 0 1,1 5,0 Z',notes:'直径10'},
+  ]},
+]},
+{cat:'📐 基础几何布片',items:[
+  {name:'方巾/包袱布',desc:'正方形 边长45',pieces:[
+    {label:'方巾',qty:1,nw:45,nh:45,path:'M0,0 L45,0 L45,45 L0,45 Z',notes:'边长45'},
+  ]},
+  {name:'圆形布片',desc:'直径36 杯垫/包底',pieces:[
+    {label:'圆形布片',qty:1,nw:36,nh:36,path:'M18,0 A18,18 0 1,1 18,36 A18,18 0 1,1 18,0 Z',notes:'直径36'},
+  ]},
+  {name:'三角巾',desc:'等边三角形 边长50',pieces:[
+    {label:'三角巾',qty:1,nw:50,nh:43,path:'M25,0 L50,43 L0,43 Z',notes:'边长50 高43'},
+  ]},
+  {name:'六边形拼布',desc:'边长18 蜂巢拼布',pieces:[
+    {label:'六边形',qty:1,nw:36,nh:31,path:'M9,0 L27,0 L36,15.5 L27,31 L9,31 L0,15.5 Z',notes:'边长18'},
+  ]},
+  {name:'椭圆形布片',desc:'长40×宽28 包底/装饰',pieces:[
+    {label:'椭圆布片',qty:1,nw:40,nh:28,path:'M20,0 A20,14 0 1,1 20,28 A20,14 0 1,1 20,0 Z',notes:'长40 宽28'},
+  ]},
+]},
+];
+let cur={ci:0,ii:0};
+const seamEl=document.getElementById('seamInput');
+const scaleEl=document.getElementById('scaleInput');
+const svgEl=document.getElementById('svgCanvas');
+const listEl=document.getElementById('templateList');
+
+PROJECTS.forEach((c,ci)=>{
+  const h=document.createElement('div');
+  h.className='cat-title'+(ci===0?' open':'');
+  h.textContent=c.cat;
+  const box=document.createElement('div');
+  box.className='cat-items'+(ci===0?' show':'');
+  h.onclick=()=>{h.classList.toggle('open');box.classList.toggle('show');};
+  listEl.appendChild(h);
+  c.items.forEach((t,ii)=>{
+    const d=document.createElement('div');
+    d.className='tpl-card'+(ci===0&&ii===0?' active':'');
+    d.innerHTML=`<div class="tpl-name">${t.name}</div><div class="tpl-desc">${t.desc}</div>`;
+    d.onclick=()=>{cur={ci,ii};document.querySelectorAll('.tpl-card').forEach(x=>x.classList.remove('active'));d.classList.add('active');draw();};
+    box.appendChild(d);
+  });
+  listEl.appendChild(box);
+});
+
+const printEl=document.getElementById('printMode');
+
+function draw(){
+  const seam=parseFloat(seamEl.value)||0;
+  const isPrint=printEl.checked;
+  // In print mode: 1 SVG unit = 1mm (so nw cm = nw*10 units)
+  // In preview mode: 1 SVG unit = sc pixels per cm
+  const PX_PER_CM=isPrint?10:parseInt(scaleEl.value)||4;
+  const proj=PROJECTS[cur.ci].items[cur.ii];
+  const pieces=proj.pieces;
+  const gap=isPrint?15:40; // mm or px gap between pieces
+  const mg=isPrint?20:60;
+  const pieceBoxes=[];
+
+  pieces.forEach(p=>{
+    const sp=seam*PX_PER_CM;
+    const tw=p.nw*PX_PER_CM+sp*2;
+    const th=p.nh*PX_PER_CM+sp*2;
+    pieceBoxes.push({p,tw,th,sp});
+  });
+
+  // A4 printable area in mm: ~194 x ~277 (with 8mm margins)
+  const maxRowW=isPrint?194*10/10:900; // 194mm in print, 900px in preview
+  const rows=[];
+  let rowItems=[],rowW=0,rowH=0;
+  pieceBoxes.forEach(b=>{
+    const bw=b.tw+mg;
+    if(rowW+bw>maxRowW && rowItems.length>0){
+      rows.push({items:rowItems,w:rowW,h:rowH});
+      rowItems=[];rowW=0;rowH=0;
+    }
+    rowItems.push(b);
+    rowW+=bw;
+    rowH=Math.max(rowH,b.th);
+  });
+  if(rowItems.length) rows.push({items:rowItems,w:rowW,h:rowH});
+
+  const titleH=isPrint?12:40;
+  const footerH=isPrint?8:30;
+  const testSquareH=isPrint?65:0; // space for 5cm test square
+  const rowGap=isPrint?mg+8:mg+20;
+  const totalH=titleH+10+rows.reduce((s,r)=>s+r.h+rowGap,0)+footerH+testSquareH;
+  const totalW=Math.max(isPrint?194:600,...rows.map(r=>r.w+mg*2));
+
+  if(isPrint){
+    // Use mm units for 1:1 printing
+    svgEl.setAttribute('width',totalW+'mm');
+    svgEl.setAttribute('height',totalH+'mm');
+  }else{
+    svgEl.setAttribute('width',totalW);
+    svgEl.setAttribute('height',totalH);
+  }
+  svgEl.setAttribute('viewBox',`0 0 ${totalW} ${totalH}`);
+
+  let s=`<style>text{font-family:'PingFang SC','Microsoft YaHei',sans-serif}</style>`;
+
+  // title
+  const fs=isPrint?4:16, fs2=isPrint?3:11;
+  s+=`<text x="${totalW/2}" y="${isPrint?5:26}" text-anchor="middle" font-size="${fs}" fill="#5a3e3e" font-weight="600">${proj.name}</text>`;
+  s+=`<text x="${totalW/2}" y="${isPrint?10:40}" text-anchor="middle" font-size="${fs2}" fill="#b5838d">${proj.desc}${seam>0?' ｜ 缝份'+seam+'cm':''}</text>`;
+
+  let cy=titleH+5;
+
+  rows.forEach(row=>{
+    let cx=Math.max(mg,(totalW-row.w)/2);
+    row.items.forEach(b=>{
+      const{p,tw,th,sp}=b;
+      const ox=cx+sp;
+      const oy=cy+sp;
+
+      if(seam>0)
+        s+=`<rect x="${cx}" y="${cy}" width="${tw}" height="${th}" fill="none" stroke="#d4a0a0" stroke-width="${isPrint?.2:.8}" stroke-dasharray="${isPrint?'2,1':'5,3'}" rx="${isPrint?1:2}"/>`;
+
+      s+=`<g transform="translate(${ox},${oy}) scale(${PX_PER_CM})">`;
+      s+=`<path d="${p.path}" fill="${isPrint?'none':'#fff8f8'}" stroke="#5a3e3e" stroke-width="${(isPrint?.08:1.2)/PX_PER_CM}" stroke-linejoin="round"/>`;
+      s+=`</g>`;
+
+      // grain arrow
+      const ax=ox+p.nw*PX_PER_CM/2;
+      const ay1=oy+p.nh*PX_PER_CM*.25;
+      const ay2=oy+p.nh*PX_PER_CM*.65;
+      const minArrow=isPrint?10:30;
+      if(p.nh*PX_PER_CM>minArrow){
+        s+=`<line x1="${ax}" y1="${ay1}" x2="${ax}" y2="${ay2}" stroke="#ccc" stroke-width="${isPrint?.15:.8}"/>`;
+        const as=isPrint?1.5:5;
+        s+=`<polygon points="${ax},${ay1-as} ${ax-as*.6},${ay1+as*.4} ${ax+as*.6},${ay1+as*.4}" fill="#ccc"/>`;
+      }
+
+      // label
+      const lfs=isPrint?3:12, nfs=isPrint?2.2:9;
+      const qtyStr=p.qty>1?` ×${p.qty}`:'';
+      s+=`<text x="${ox+p.nw*PX_PER_CM/2}" y="${oy+p.nh*PX_PER_CM/2-lfs*.4}" text-anchor="middle" font-size="${lfs}" fill="#5a3e3e" font-weight="600" dominant-baseline="middle">${p.label}${qtyStr}</text>`;
+      if(p.notes)
+        s+=`<text x="${ox+p.nw*PX_PER_CM/2}" y="${oy+p.nh*PX_PER_CM/2+lfs*.6}" text-anchor="middle" font-size="${nfs}" fill="#b5838d" dominant-baseline="middle">${p.notes}</text>`;
+
+      // dimensions
+      const dimC='#777',dfs=isPrint?2.2:9,doff=isPrint?3:12,dtoff=isPrint?5:18,dsw=isPrint?.1:.6;
+      // width on top
+      s+=`<line x1="${ox}" y1="${oy-doff}" x2="${ox+p.nw*PX_PER_CM}" y2="${oy-doff}" stroke="${dimC}" stroke-width="${dsw}"/>`;
+      s+=`<line x1="${ox}" y1="${oy-doff-1.5}" x2="${ox}" y2="${oy-doff+1.5}" stroke="${dimC}" stroke-width="${dsw}"/>`;
+      s+=`<line x1="${ox+p.nw*PX_PER_CM}" y1="${oy-doff-1.5}" x2="${ox+p.nw*PX_PER_CM}" y2="${oy-doff+1.5}" stroke="${dimC}" stroke-width="${dsw}"/>`;
+      s+=`<text x="${ox+p.nw*PX_PER_CM/2}" y="${oy-dtoff}" text-anchor="middle" font-size="${dfs}" fill="${dimC}">${p.nw}cm</text>`;
+      // height on left
+      s+=`<line x1="${ox-doff}" y1="${oy}" x2="${ox-doff}" y2="${oy+p.nh*PX_PER_CM}" stroke="${dimC}" stroke-width="${dsw}"/>`;
+      s+=`<line x1="${ox-doff-1.5}" y1="${oy}" x2="${ox-doff+1.5}" y2="${oy}" stroke="${dimC}" stroke-width="${dsw}"/>`;
+      s+=`<line x1="${ox-doff-1.5}" y1="${oy+p.nh*PX_PER_CM}" x2="${ox-doff+1.5}" y2="${oy+p.nh*PX_PER_CM}" stroke="${dimC}" stroke-width="${dsw}"/>`;
+      s+=`<text x="${ox-dtoff}" y="${oy+p.nh*PX_PER_CM/2}" text-anchor="middle" font-size="${dfs}" fill="${dimC}" dominant-baseline="middle" transform="rotate(-90,${ox-dtoff},${oy+p.nh*PX_PER_CM/2})">${p.nh}cm</text>`;
+
+      if(seam>0){
+        const sfs=isPrint?2:8;
+        s+=`<text x="${cx+tw/2}" y="${cy+th+sfs*1.5}" text-anchor="middle" font-size="${sfs}" fill="#b5838d">含缝份 ${(p.nw+seam*2).toFixed(1)}×${(p.nh+seam*2).toFixed(1)}</text>`;
+      }
+
+      cx+=tw+gap;
+    });
+    cy+=row.h+rowGap;
+  });
+
+  // Test square (print mode only)
+  if(isPrint){
+    const sqX=totalW-60, sqY=cy+2;
+    const sq=50; // 5cm = 50mm
+    s+=`<rect x="${sqX}" y="${sqY}" width="${sq}" height="${sq}" fill="none" stroke="#333" stroke-width=".3"/>`;
+    // grid lines every 1cm
+    for(let i=1;i<5;i++){
+      s+=`<line x1="${sqX+i*10}" y1="${sqY}" x2="${sqX+i*10}" y2="${sqY+sq}" stroke="#ccc" stroke-width=".1"/>`;
+      s+=`<line x1="${sqX}" y1="${sqY+i*10}" x2="${sqX+sq}" y2="${sqY+i*10}" stroke="#ccc" stroke-width=".1"/>`;
+    }
+    s+=`<text x="${sqX+sq/2}" y="${sqY-2}" text-anchor="middle" font-size="2.5" fill="#333">校验方格 5×5cm</text>`;
+    s+=`<text x="${sqX+sq/2}" y="${sqY+sq+4}" text-anchor="middle" font-size="2" fill="#999">打印后请用尺量此方格，确认为5cm×5cm</text>`;
+    s+=`<text x="${sqX+sq/2}" y="${sqY+sq+7}" text-anchor="middle" font-size="2" fill="#999">打印设置：缩放100%，无边距或最小边距</text>`;
+  }
+
+  // footer
+  const ffs=isPrint?2.5:10;
+  if(seam>0)
+    s+=`<text x="${totalW/2}" y="${totalH-(isPrint?3:10)}" text-anchor="middle" font-size="${ffs}" fill="#b5838d">- - - 虚线为缝份线（缝份 ${seam}cm）- - -</text>`;
+
+  svgEl.innerHTML=s;
+}
+
+seamEl.addEventListener('input',draw);
+scaleEl.addEventListener('change',draw);
+printEl.addEventListener('change',draw);
+draw();
+
+// === Tab switching ===
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',i===(tab==='local'?0:1));
+  });
+  document.getElementById('panelLocal').classList.toggle('show',tab==='local');
+  document.getElementById('panelOnline').classList.toggle('show',tab==='online');
+  if(tab==='online') loadLibrary();
+}
+
+// === Online pattern library ===
+let libData=null;
+const libList=document.getElementById('libList');
+const libStatus=document.getElementById('libStatus');
+const libSearch=document.getElementById('libSearch');
+
+async function loadLibrary(){
+  if(libData){renderLib();return;}
+  libStatus.textContent='加载中...';
+  libList.innerHTML='';
+  try{
+    const resp=await fetch('patterns.json');
+    if(!resp.ok) throw new Error(resp.status);
+    libData=await resp.json();
+    libStatus.textContent=`共 ${libData.total} 个纸样 · 更新于 ${libData.updated}`;
+    renderLib();
+  }catch(e){
+    libStatus.textContent='';
+    libList.innerHTML=`<div style="text-align:center;padding:20px;color:#aaa;font-size:12px">
+      <p>暂无在线数据</p>
+      <p style="margin-top:8px;font-size:10px">本地使用时，请先运行爬虫生成 patterns.json：</p>
+      <code style="font-size:10px;color:#b5838d;display:block;margin-top:4px">python3 scraper/scrape.py</code>
+      <p style="margin-top:8px;font-size:10px">部署到 GitHub Pages 后会自动更新</p>
+    </div>`;
+  }
+}
+
+function renderLib(){
+  if(!libData)return;
+  const q=libSearch.value.trim().toLowerCase();
+  const filtered=libData.patterns.filter(p=>
+    !q || p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q)
+  );
+  libList.innerHTML='';
+  if(!filtered.length){
+    libList.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:12px">无匹配结果</div>';
+    return;
+  }
+  // group by category
+  const cats={};
+  filtered.forEach(p=>{if(!cats[p.category])cats[p.category]=[];cats[p.category].push(p);});
+  Object.entries(cats).forEach(([cat,items])=>{
+    const h=document.createElement('div');
+    h.style.cssText='font-size:11px;color:#b5838d;font-weight:600;margin-top:4px';
+    h.textContent=`${cat} (${items.length})`;
+    libList.appendChild(h);
+    items.forEach(p=>{
+      const d=document.createElement('div');
+      d.className='lib-card';
+      let html=`<div class="lib-name">${p.name}</div>`;
+      html+=`<div class="lib-meta">${p.description||''}</div>`;
+      if(p.pieces&&p.pieces.length){
+        html+=`<div style="margin-top:3px">${p.pieces.map(pc=>`<span class="lib-badge">${pc.label} ${pc.w}×${pc.h} ×${pc.qty}</span>`).join('')}</div>`;
+      }
+      html+=`<div class="lib-src">${p.source||''}${p.url?` · <a href="${p.url}" target="_blank" style="color:#c27185">查看原版</a>`:''}</div>`;
+      d.innerHTML=html;
+      libList.appendChild(d);
+    });
+  });
+}
+
+libSearch.addEventListener('input',renderLib);
+</script>
+</body>
+</html>

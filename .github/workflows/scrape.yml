@@ -1,0 +1,33 @@
+name: 更新纸样数据
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'  # 每周一凌晨3点自动运行
+  workflow_dispatch:       # 也可以手动触发
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 运行爬虫
+        run: python scraper/scrape.py
+
+      - name: 移动数据文件
+        run: mv patterns.json ./patterns.json 2>/dev/null || true
+
+      - name: 提交更新
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add patterns.json
+          git diff --staged --quiet || git commit -m "自动更新纸样数据 $(date +%Y-%m-%d)"
+          git push
