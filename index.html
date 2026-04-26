@@ -105,12 +105,23 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
     <!-- 内置模板面板 -->
     <div id="panelLocal" class="tab-panel show">
       <div class="ctrl-row">
-        <div><label>缝份 (cm)</label><input id="seamInput" type="number" value="1.5" min="0" max="5" step="0.1"/></div>
-        <div><label>预览缩放</label><select id="scaleInput"><option value="3">小</option><option value="4" selected>中</option><option value="6">大</option></select></div>
+        <div><label>面料类型</label>
+          <select id="fabricInput">
+            <option value="woven">普通梭织(棉/涤棉/亚麻)</option>
+            <option value="thin">薄料(雪纺/真丝/乔其纱)</option>
+            <option value="thick">厚料(牛仔/帆布/呢料)</option>
+            <option value="knit">针织(平纹针织/罗纹)</option>
+          </select>
+        </div>
       </div>
-      <div>
-        <label><input type="checkbox" id="printMode" style="margin-right:4px"/>打印模式 (1:1 真实尺寸)</label>
-        <p style="font-size:10px;color:#aaa;margin-top:2px">勾选后图纸按实际cm尺寸输出，打印时请选100%不缩放</p>
+      <div class="ctrl-row">
+        <div><label>预览缩放</label><select id="scaleInput"><option value="3">小</option><option value="4" selected>中</option><option value="6">大</option></select></div>
+        <div style="display:flex;align-items:flex-end;padding-bottom:1px">
+          <label style="font-size:11px;white-space:nowrap"><input type="checkbox" id="printMode" style="margin-right:3px"/>打印模式</label>
+        </div>
+      </div>
+      <div style="background:#fff8f5;border:1px solid #f5e0d8;border-radius:8px;padding:8px 10px;font-size:10px;color:#888;line-height:1.6">
+        <div id="seamInfo"></div>
       </div>
       <div id="templateList" style="flex:1;overflow-y:auto"></div>
     </div>
@@ -132,7 +143,7 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
     </div>
 
     <div class="btn-row">
-      <button class="btn btn-reset" onclick="document.getElementById('seamInput').value='1.5';draw()">重置缝份</button>
+      <button class="btn btn-reset" onclick="fabricEl.value='woven';updateSeamInfo();draw()">重置面料</button>
       <button class="btn btn-print" onclick="doPrint()">🖨️ 打印</button>
       <button class="btn" style="background:#f5e6e9;color:#9d4c5a;flex:.6" onclick="exportImage()">📥 导出</button>
     </div>
@@ -143,156 +154,186 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
 const PROJECTS=[
 {cat:'👗 女装成衣',items:[
   {name:'基础T恤',desc:'前片+后片+袖×2+领口条+下摆贴边',pieces:[
-    {label:'前片',qty:1,nw:45,nh:62,path:'M0,14 Q0,0 14,0 L39,0 Q45,0 45,6 L45,58 Q45,62 43,62 L31,62 Q22,59 14,62 L2,62 Q0,62 0,58 Z',notes:'半胸围45 衣长62 ⊕对折裁'},
-    {label:'后片',qty:1,nw:45,nh:64,path:'M0,8 Q0,0 8,0 L37,0 Q45,0 45,8 L45,60 Q45,64 43,64 L2,64 Q0,64 0,60 Z',notes:'半胸围45 后中长64 ⊕对折裁'},
-    {label:'袖片',qty:2,nw:38,nh:58,path:'M0,16 Q11,0 19,-2 Q27,0 38,16 L35,58 L3,58 Z',notes:'袖山高16 袖长58 ⊕对折裁'},
-    {label:'领口条',qty:1,nw:48,nh:4,path:'M0,0 L48,0 L48,4 L0,4 Z',notes:'长48 宽4 弹力布'},
-    {label:'下摆贴边',qty:1,nw:45,nh:4,path:'M0,0 L45,0 L45,4 L0,4 Z',notes:'宽45 高4 ⊕对折裁'},
+    {label:'前片',qty:1,nw:45,nh:62,path:'M0,14 Q0,0 14,0 L39,0 Q45,0 45,6 L45,58 Q45,62 43,62 L31,62 Q22,59 14,62 L2,62 Q0,62 0,58 Z',notes:'半胸围45 衣长62 ⊕对折裁',st:'side'},
+    {label:'后片',qty:1,nw:45,nh:64,path:'M0,8 Q0,0 8,0 L37,0 Q45,0 45,8 L45,60 Q45,64 43,64 L2,64 Q0,64 0,60 Z',notes:'半胸围45 后中长64 ⊕对折裁',st:'side'},
+    {label:'袖片',qty:2,nw:38,nh:58,path:'M0,16 Q11,0 19,-2 Q27,0 38,16 L35,58 L3,58 Z',notes:'袖山高16 袖长58 ⊕对折裁',st:'armhole'},
+    {label:'领口条',qty:1,nw:48,nh:4,path:'M0,0 L48,0 L48,4 L0,4 Z',notes:'长48 宽4 弹力布',st:'curve'},
+    {label:'下摆贴边',qty:1,nw:45,nh:4,path:'M0,0 L45,0 L45,4 L0,4 Z',notes:'宽45 高4 ⊕对折裁',st:'hem'},
   ]},
   {name:'泡泡袖上衣',desc:'前片+后片+泡泡袖×2',pieces:[
-    {label:'前片',qty:1,nw:44,nh:55,path:'M0,14 Q0,0 14,0 L38,0 Q44,0 44,6 L44,51 Q44,55 42,55 L2,55 Q0,55 0,51 Z',notes:'半胸围44 衣长55 ⊕对折裁'},
-    {label:'后片',qty:1,nw:44,nh:57,path:'M0,8 Q0,0 8,0 L36,0 Q44,0 44,8 L44,53 Q44,57 42,57 L2,57 Q0,57 0,53 Z',notes:'半胸围44 后中长57 ⊕对折裁'},
-    {label:'泡泡袖',qty:2,nw:48,nh:34,path:'M4,12 Q15,-4 24,-4 Q33,-4 44,12 L48,28 Q24,34 0,28 Z',notes:'袖山高16 袖宽40 袖长28'},
+    {label:'前片',qty:1,nw:44,nh:55,path:'M0,14 Q0,0 14,0 L38,0 Q44,0 44,6 L44,51 Q44,55 42,55 L2,55 Q0,55 0,51 Z',notes:'半胸围44 衣长55 ⊕对折裁',st:'side'},
+    {label:'后片',qty:1,nw:44,nh:57,path:'M0,8 Q0,0 8,0 L36,0 Q44,0 44,8 L44,53 Q44,57 42,57 L2,57 Q0,57 0,53 Z',notes:'半胸围44 后中长57 ⊕对折裁',st:'side'},
+    {label:'泡泡袖',qty:2,nw:48,nh:34,path:'M4,12 Q15,-4 24,-4 Q33,-4 44,12 L48,28 Q24,34 0,28 Z',notes:'袖山高16 袖宽40 袖长28',st:'armhole'},
   ]},
   {name:'插肩袖T恤',desc:'前片+后片(含袖一体)+领口罗纹',pieces:[
-    {label:'前片(含袖)',qty:1,nw:64,nh:65,path:'M0,0 L64,0 L64,28 L46,28 L46,61 Q46,65 44,65 L20,65 Q18,65 18,61 L18,28 L0,28 Z',notes:'含袖展开宽64 衣长65 ⊕对折裁'},
-    {label:'后片(含袖)',qty:1,nw:64,nh:67,path:'M0,0 L64,0 L64,28 L46,28 L46,63 Q46,67 44,67 L20,67 Q18,67 18,63 L18,28 L0,28 Z',notes:'含袖展开宽64 后中长67 ⊕对折裁'},
-    {label:'领口罗纹',qty:1,nw:42,nh:4,path:'M0,0 L42,0 L42,4 L0,4 Z',notes:'长42 宽4'},
+    {label:'前片(含袖)',qty:1,nw:64,nh:65,path:'M0,0 L64,0 L64,28 L46,28 L46,61 Q46,65 44,65 L20,65 Q18,65 18,61 L18,28 L0,28 Z',notes:'含袖展开宽64 衣长65 ⊕对折裁',st:'side'},
+    {label:'后片(含袖)',qty:1,nw:64,nh:67,path:'M0,0 L64,0 L64,28 L46,28 L46,63 Q46,67 44,67 L20,67 Q18,67 18,63 L18,28 L0,28 Z',notes:'含袖展开宽64 后中长67 ⊕对折裁',st:'side'},
+    {label:'领口罗纹',qty:1,nw:42,nh:4,path:'M0,0 L42,0 L42,4 L0,4 Z',notes:'长42 宽4',st:'curve'},
   ]},
   {name:'A字裙',desc:'前裙片+后裙片+腰头',pieces:[
-    {label:'前裙片',qty:1,nw:50,nh:60,path:'M8,0 L42,0 L50,60 L0,60 Z',notes:'腰宽34 摆宽50 裙长60 ⊕对折裁'},
-    {label:'后裙片',qty:1,nw:50,nh:60,path:'M8,0 L42,0 L50,60 L0,60 Z',notes:'腰宽34 摆宽50 裙长60 ⊕对折裁'},
-    {label:'腰头',qty:1,nw:70,nh:8,path:'M0,0 L70,0 L70,8 L0,8 Z',notes:'腰围70 宽8(对折4) 含搭门2'},
+    {label:'前裙片',qty:1,nw:50,nh:60,path:'M8,0 L42,0 L50,60 L0,60 Z',notes:'腰宽34 摆宽50 裙长60 ⊕对折裁',st:'side'},
+    {label:'后裙片',qty:1,nw:50,nh:60,path:'M8,0 L42,0 L50,60 L0,60 Z',notes:'腰宽34 摆宽50 裙长60 ⊕对折裁',st:'side'},
+    {label:'腰头',qty:1,nw:70,nh:8,path:'M0,0 L70,0 L70,8 L0,8 Z',notes:'腰围70 宽8(对折4) 含搭门2',st:'waist'},
   ]},
   {name:'直筒裙',desc:'前裙片+后裙片+腰头+后开衩贴边',pieces:[
-    {label:'前裙片',qty:1,nw:46,nh:65,path:'M2,0 L44,0 L46,65 L0,65 Z',notes:'半臀围46 裙长65 ⊕对折裁'},
-    {label:'后裙片',qty:2,nw:24,nh:65,path:'M0,0 L24,0 L24,65 L0,65 Z',notes:'1/4臀围24 裙长65 后中开缝'},
-    {label:'腰头',qty:1,nw:70,nh:8,path:'M0,0 L70,0 L70,8 L0,8 Z',notes:'腰围70 宽8(对折4)'},
-    {label:'后开衩贴边',qty:2,nw:4,nh:18,path:'M0,0 L4,0 L4,18 L0,18 Z',notes:'宽4 长18'},
+    {label:'前裙片',qty:1,nw:46,nh:65,path:'M2,0 L44,0 L46,65 L0,65 Z',notes:'半臀围46 裙长65 ⊕对折裁',st:'side'},
+    {label:'后裙片',qty:2,nw:24,nh:65,path:'M0,0 L24,0 L24,65 L0,65 Z',notes:'1/4臀围24 裙长65 后中开缝',st:'side'},
+    {label:'腰头',qty:1,nw:70,nh:8,path:'M0,0 L70,0 L70,8 L0,8 Z',notes:'腰围70 宽8(对折4)',st:'waist'},
+    {label:'后开衩贴边',qty:2,nw:4,nh:18,path:'M0,0 L4,0 L4,18 L0,18 Z',notes:'宽4 长18',st:'topstitch'},
   ]},
   {name:'直筒裤',desc:'前片×2+后片×2+腰头+门襟挡',pieces:[
-    {label:'裤前片',qty:2,nw:48,nh:100,path:'M6,0 L36,0 L36,38 L48,48 L48,100 L0,100 L0,48 L6,38 Z',notes:'半腰围30 裤长100'},
-    {label:'裤后片',qty:2,nw:55,nh:100,path:'M8,0 L40,0 L40,36 L55,48 L55,100 L0,100 L0,48 L8,36 Z',notes:'半臀围32 裤长100'},
-    {label:'腰头',qty:1,nw:72,nh:8,path:'M0,0 L72,0 L72,8 L0,8 Z',notes:'腰围72 宽8(对折4)'},
-    {label:'门襟挡',qty:1,nw:8,nh:18,path:'M0,0 L8,0 L8,18 L0,18 Z',notes:'宽8 长18'},
+    {label:'裤前片',qty:2,nw:48,nh:100,path:'M6,0 L36,0 L36,38 L48,48 L48,100 L0,100 L0,48 L6,38 Z',notes:'半腰围30 裤长100',st:'side'},
+    {label:'裤后片',qty:2,nw:55,nh:100,path:'M8,0 L40,0 L40,36 L55,48 L55,100 L0,100 L0,48 L8,36 Z',notes:'半臀围32 裤长100',st:'side'},
+    {label:'腰头',qty:1,nw:72,nh:8,path:'M0,0 L72,0 L72,8 L0,8 Z',notes:'腰围72 宽8(对折4)',st:'waist'},
+    {label:'门襟挡',qty:1,nw:8,nh:18,path:'M0,0 L8,0 L8,18 L0,18 Z',notes:'宽8 长18',st:'topstitch'},
   ]},
   {name:'五分阔腿裤',desc:'前片×2+后片×2+松紧腰头',pieces:[
-    {label:'裤前片',qty:2,nw:50,nh:55,path:'M6,0 L40,0 L40,20 L50,28 L50,55 L0,55 L0,28 L6,20 Z',notes:'半臀围34 裤长55'},
-    {label:'裤后片',qty:2,nw:56,nh:55,path:'M8,0 L44,0 L44,18 L56,28 L56,55 L0,55 L0,28 L8,18 Z',notes:'半臀围36 裤长55'},
-    {label:'松紧腰头',qty:1,nw:90,nh:10,path:'M0,0 L90,0 L90,10 L0,10 Z',notes:'腰围90(含松紧余量) 宽10 对折含通道'},
+    {label:'裤前片',qty:2,nw:50,nh:55,path:'M6,0 L40,0 L40,20 L50,28 L50,55 L0,55 L0,28 L6,20 Z',notes:'半臀围34 裤长55',st:'side'},
+    {label:'裤后片',qty:2,nw:56,nh:55,path:'M8,0 L44,0 L44,18 L56,28 L56,55 L0,55 L0,28 L8,18 Z',notes:'半臀围36 裤长55',st:'side'},
+    {label:'松紧腰头',qty:1,nw:90,nh:10,path:'M0,0 L90,0 L90,10 L0,10 Z',notes:'腰围90(含松紧余量) 宽10 对折含通道',st:'waist'},
   ]},
   {name:'连衣裙',desc:'前片+后片+袖×2+腰带+后拉链贴边',pieces:[
-    {label:'前片',qty:1,nw:46,nh:90,path:'M2,14 Q2,0 14,0 L40,0 Q46,0 46,6 L46,34 Q45,38 43,40 L46,90 L0,90 L3,40 Q1,38 0,34 Z',notes:'半胸围44 全长90 ⊕对折裁'},
-    {label:'后片',qty:2,nw:24,nh:92,path:'M0,8 Q0,0 8,0 L24,0 L24,92 L0,92 Z',notes:'1/4胸围24 后中长92 后中开缝'},
-    {label:'袖片',qty:2,nw:36,nh:50,path:'M0,14 Q10,0 18,-2 Q26,0 36,14 L33,50 L3,50 Z',notes:'袖山高14 袖长50 ⊕对折裁'},
-    {label:'腰带',qty:1,nw:74,nh:6,path:'M0,0 L74,0 L74,6 L0,6 Z',notes:'长74 宽6'},
-    {label:'后拉链贴边',qty:2,nw:3,nh:50,path:'M0,0 L3,0 L3,50 L0,50 Z',notes:'宽3 长50'},
+    {label:'前片',qty:1,nw:46,nh:90,path:'M2,14 Q2,0 14,0 L40,0 Q46,0 46,6 L46,34 Q45,38 43,40 L46,90 L0,90 L3,40 Q1,38 0,34 Z',notes:'半胸围44 全长90 ⊕对折裁',st:'side'},
+    {label:'后片',qty:2,nw:24,nh:92,path:'M0,8 Q0,0 8,0 L24,0 L24,92 L0,92 Z',notes:'1/4胸围24 后中长92 后中开缝',st:'side'},
+    {label:'袖片',qty:2,nw:36,nh:50,path:'M0,14 Q10,0 18,-2 Q26,0 36,14 L33,50 L3,50 Z',notes:'袖山高14 袖长50 ⊕对折裁',st:'armhole'},
+    {label:'腰带',qty:1,nw:74,nh:6,path:'M0,0 L74,0 L74,6 L0,6 Z',notes:'长74 宽6',st:'strap',st:'strap'},
+    {label:'后拉链贴边',qty:2,nw:3,nh:50,path:'M0,0 L3,0 L3,50 L0,50 Z',notes:'宽3 长50',st:'topstitch'},
   ]},
 ]},
 {cat:'👜 包袋与收纳',items:[
   {name:'托特包',desc:'表布×2+里布×2+提手×2+包底',pieces:[
-    {label:'表布',qty:2,nw:36,nh:38,path:'M0,0 L36,0 L36,38 L0,38 Z',notes:'宽36 高38'},
-    {label:'里布',qty:2,nw:36,nh:38,path:'M0,0 L36,0 L36,38 L0,38 Z',notes:'宽36 高38'},
-    {label:'提手',qty:2,nw:6,nh:50,path:'M0,0 L6,0 L6,50 L0,50 Z',notes:'宽6(对折3) 长50'},
-    {label:'包底',qty:1,nw:36,nh:12,path:'M0,0 L36,0 L36,12 L0,12 Z',notes:'宽36 深12'},
+    {label:'表布',qty:2,nw:36,nh:38,path:'M0,0 L36,0 L36,38 L0,38 Z',notes:'宽36 高38',st:'side'},
+    {label:'里布',qty:2,nw:36,nh:38,path:'M0,0 L36,0 L36,38 L0,38 Z',notes:'宽36 高38',st:'side'},
+    {label:'提手',qty:2,nw:6,nh:50,path:'M0,0 L6,0 L6,50 L0,50 Z',notes:'宽6(对折3) 长50',st:'strap'},
+    {label:'包底',qty:1,nw:36,nh:12,path:'M0,0 L36,0 L36,12 L0,12 Z',notes:'宽36 深12',st:'side'},
   ]},
   {name:'束口袋',desc:'袋身×2+穿绳通道×2',pieces:[
-    {label:'袋身',qty:2,nw:22,nh:30,path:'M0,0 L22,0 L22,30 Q11,34 0,30 Z',notes:'宽22 高30'},
-    {label:'穿绳通道',qty:2,nw:22,nh:4,path:'M0,0 L22,0 L22,4 L0,4 Z',notes:'宽22 高4'},
+    {label:'袋身',qty:2,nw:22,nh:30,path:'M0,0 L22,0 L22,30 Q11,34 0,30 Z',notes:'宽22 高30',st:'side'},
+    {label:'穿绳通道',qty:2,nw:22,nh:4,path:'M0,0 L22,0 L22,4 L0,4 Z',notes:'宽22 高4',st:'hem'},
   ]},
   {name:'拉链化妆包',desc:'表布+里布+拉链挡布',pieces:[
-    {label:'表布',qty:1,nw:24,nh:16,path:'M2,0 L22,0 Q24,0 24,2 L24,14 Q24,16 22,16 L2,16 Q0,16 0,14 L0,2 Q0,0 2,0 Z',notes:'宽24 高16 圆角'},
-    {label:'里布',qty:1,nw:24,nh:16,path:'M0,0 L24,0 L24,16 L0,16 Z',notes:'宽24 高16'},
-    {label:'拉链挡布',qty:2,nw:3,nh:16,path:'M0,0 L3,0 L3,16 L0,16 Z',notes:'宽3 高16'},
+    {label:'表布',qty:1,nw:24,nh:16,path:'M2,0 L22,0 Q24,0 24,2 L24,14 Q24,16 22,16 L2,16 Q0,16 0,14 L0,2 Q0,0 2,0 Z',notes:'宽24 高16 圆角',st:'side'},
+    {label:'里布',qty:1,nw:24,nh:16,path:'M0,0 L24,0 L24,16 L0,16 Z',notes:'宽24 高16',st:'side'},
+    {label:'拉链挡布',qty:2,nw:3,nh:16,path:'M0,0 L3,0 L3,16 L0,16 Z',notes:'宽3 高16',st:'topstitch'},
   ]},
   {name:'多功能卡包',desc:'外皮+内卡位×3+零钱袋',pieces:[
-    {label:'外皮',qty:1,nw:22,nh:16,path:'M0,0 L22,0 L22,16 L0,16 Z',notes:'展开22×16 对折11×16'},
-    {label:'卡位',qty:3,nw:10,nh:8,path:'M0,0 L10,0 L10,8 L0,8 Z',notes:'宽10 高8'},
-    {label:'零钱袋',qty:1,nw:10,nh:10,path:'M0,0 L10,0 L10,10 L0,10 Z',notes:'宽10 高10 拉链口'},
+    {label:'外皮',qty:1,nw:22,nh:16,path:'M0,0 L22,0 L22,16 L0,16 Z',notes:'展开22×16 对折11×16',st:'side'},
+    {label:'卡位',qty:3,nw:10,nh:8,path:'M0,0 L10,0 L10,8 L0,8 Z',notes:'宽10 高8',st:'topstitch'},
+    {label:'零钱袋',qty:1,nw:10,nh:10,path:'M0,0 L10,0 L10,10 L0,10 Z',notes:'宽10 高10 拉链口',st:'side'},
   ]},
   {name:'单肩斜挎包',desc:'包身+翻盖+肩带+内袋',pieces:[
-    {label:'包身',qty:2,nw:26,nh:20,path:'M0,0 L26,0 L26,20 L0,20 Z',notes:'宽26 高20'},
-    {label:'翻盖',qty:1,nw:26,nh:12,path:'M0,0 L26,0 L26,12 Q13,15 0,12 Z',notes:'宽26 高12 弧形底'},
-    {label:'肩带',qty:1,nw:4,nh:120,path:'M0,0 L4,0 L4,120 L0,120 Z',notes:'宽4 长120(可调)'},
-    {label:'内袋',qty:1,nw:22,nh:14,path:'M0,0 L22,0 L22,14 L0,14 Z',notes:'宽22 高14'},
+    {label:'包身',qty:2,nw:26,nh:20,path:'M0,0 L26,0 L26,20 L0,20 Z',notes:'宽26 高20',st:'side'},
+    {label:'翻盖',qty:1,nw:26,nh:12,path:'M0,0 L26,0 L26,12 Q13,15 0,12 Z',notes:'宽26 高12 弧形底',st:'curve'},
+    {label:'肩带',qty:1,nw:4,nh:120,path:'M0,0 L4,0 L4,120 L0,120 Z',notes:'宽4 长120(可调)',st:'strap'},
+    {label:'内袋',qty:1,nw:22,nh:14,path:'M0,0 L22,0 L22,14 L0,14 Z',notes:'宽22 高14',st:'side'},
   ]},
   {name:'购物袋',desc:'袋身×2+提手×2',pieces:[
-    {label:'袋身',qty:2,nw:40,nh:45,path:'M0,0 L40,0 L40,45 L0,45 Z',notes:'宽40 高45'},
-    {label:'提手',qty:2,nw:6,nh:40,path:'M0,0 L6,0 L6,40 L0,40 Z',notes:'宽6 长40'},
+    {label:'袋身',qty:2,nw:40,nh:45,path:'M0,0 L40,0 L40,45 L0,45 Z',notes:'宽40 高45',st:'side'},
+    {label:'提手',qty:2,nw:6,nh:40,path:'M0,0 L6,0 L6,40 L0,40 Z',notes:'宽6 长40',st:'strap'},
   ]},
 ]},
 {cat:'📒 手账本套与书衣',items:[
   {name:'A5手账本套',desc:'外布+内布+书签带',pieces:[
-    {label:'外布',qty:1,nw:34,nh:24,path:'M0,0 L34,0 L34,24 L0,24 Z',notes:'展开宽34 高24'},
-    {label:'内布',qty:1,nw:34,nh:24,path:'M0,0 L34,0 L34,24 L0,24 Z',notes:'展开宽34 高24'},
-    {label:'翻盖插片',qty:2,nw:8,nh:24,path:'M0,0 L8,0 L8,24 L0,24 Z',notes:'宽8 高24'},
-    {label:'书签带',qty:1,nw:1,nh:30,path:'M0,0 L1,0 L1,30 L0,30 Z',notes:'宽1 长30'},
+    {label:'外布',qty:1,nw:34,nh:24,path:'M0,0 L34,0 L34,24 L0,24 Z',notes:'展开宽34 高24',st:'side'},
+    {label:'内布',qty:1,nw:34,nh:24,path:'M0,0 L34,0 L34,24 L0,24 Z',notes:'展开宽34 高24',st:'side'},
+    {label:'翻盖插片',qty:2,nw:8,nh:24,path:'M0,0 L8,0 L8,24 L0,24 Z',notes:'宽8 高24',st:'hem'},
+    {label:'书签带',qty:1,nw:1,nh:30,path:'M0,0 L1,0 L1,30 L0,30 Z',notes:'宽1 长30',st:'fold'},
   ]},
   {name:'A6手账本套',desc:'外布+内布+翻盖插片',pieces:[
-    {label:'外布',qty:1,nw:26,nh:18,path:'M0,0 L26,0 L26,18 L0,18 Z',notes:'展开宽26 高18'},
-    {label:'内布',qty:1,nw:26,nh:18,path:'M0,0 L26,0 L26,18 L0,18 Z',notes:'展开宽26 高18'},
-    {label:'翻盖插片',qty:2,nw:6,nh:18,path:'M0,0 L6,0 L6,18 L0,18 Z',notes:'宽6 高18'},
+    {label:'外布',qty:1,nw:26,nh:18,path:'M0,0 L26,0 L26,18 L0,18 Z',notes:'展开宽26 高18',st:'side'},
+    {label:'内布',qty:1,nw:26,nh:18,path:'M0,0 L26,0 L26,18 L0,18 Z',notes:'展开宽26 高18',st:'side'},
+    {label:'翻盖插片',qty:2,nw:6,nh:18,path:'M0,0 L6,0 L6,18 L0,18 Z',notes:'宽6 高18',st:'hem'},
   ]},
   {name:'B6手账包',desc:'外布+内布+拉链口袋',pieces:[
-    {label:'外布',qty:1,nw:30,nh:21,path:'M0,0 L30,0 L30,21 L0,21 Z',notes:'展开宽30 高21'},
-    {label:'内布',qty:1,nw:30,nh:21,path:'M0,0 L30,0 L30,21 L0,21 Z',notes:'展开宽30 高21'},
-    {label:'拉链口袋',qty:1,nw:14,nh:12,path:'M0,0 L14,0 L14,12 L0,12 Z',notes:'宽14 高12'},
+    {label:'外布',qty:1,nw:30,nh:21,path:'M0,0 L30,0 L30,21 L0,21 Z',notes:'展开宽30 高21',st:'side'},
+    {label:'内布',qty:1,nw:30,nh:21,path:'M0,0 L30,0 L30,21 L0,21 Z',notes:'展开宽30 高21',st:'side'},
+    {label:'拉链口袋',qty:1,nw:14,nh:12,path:'M0,0 L14,0 L14,12 L0,12 Z',notes:'宽14 高12',st:'topstitch'},
   ]},
   {name:'笔袋',desc:'表布+里布+拉链',pieces:[
-    {label:'表布',qty:1,nw:20,nh:16,path:'M2,0 L18,0 Q20,0 20,2 L20,14 Q20,16 18,16 L2,16 Q0,16 0,14 L0,2 Q0,0 2,0 Z',notes:'宽20 展开高16'},
-    {label:'里布',qty:1,nw:20,nh:16,path:'M0,0 L20,0 L20,16 L0,16 Z',notes:'宽20 展开高16'},
+    {label:'表布',qty:1,nw:20,nh:16,path:'M2,0 L18,0 Q20,0 20,2 L20,14 Q20,16 18,16 L2,16 Q0,16 0,14 L0,2 Q0,0 2,0 Z',notes:'宽20 展开高16',st:'side'},
+    {label:'里布',qty:1,nw:20,nh:16,path:'M0,0 L20,0 L20,16 L0,16 Z',notes:'宽20 展开高16',st:'side'},
   ]},
   {name:'平板电脑套',desc:'外布+内衬+翻盖',pieces:[
-    {label:'外布',qty:1,nw:22,nh:30,path:'M2,0 L20,0 Q22,0 22,2 L22,28 Q22,30 20,30 L2,30 Q0,30 0,28 L0,2 Q0,0 2,0 Z',notes:'宽22 高30'},
-    {label:'内衬',qty:1,nw:22,nh:30,path:'M0,0 L22,0 L22,30 L0,30 Z',notes:'宽22 高30'},
-    {label:'翻盖',qty:1,nw:22,nh:8,path:'M0,0 L22,0 L22,8 L0,8 Z',notes:'宽22 高8'},
+    {label:'外布',qty:1,nw:22,nh:30,path:'M2,0 L20,0 Q22,0 22,2 L22,28 Q22,30 20,30 L2,30 Q0,30 0,28 L0,2 Q0,0 2,0 Z',notes:'宽22 高30',st:'side'},
+    {label:'内衬',qty:1,nw:22,nh:30,path:'M0,0 L22,0 L22,30 L0,30 Z',notes:'宽22 高30',st:'side'},
+    {label:'翻盖',qty:1,nw:22,nh:8,path:'M0,0 L22,0 L22,8 L0,8 Z',notes:'宽22 高8',st:'curve'},
   ]},
 ]},
 {cat:'🏠 家居布艺',items:[
   {name:'围裙套装',desc:'围裙身+口袋+腰带+颈带',pieces:[
-    {label:'围裙身',qty:1,nw:70,nh:80,path:'M10,0 L60,0 L70,20 L70,80 L0,80 L0,20 Z',notes:'上宽50 下宽70 长80'},
-    {label:'口袋',qty:1,nw:20,nh:18,path:'M0,0 L20,0 L20,18 L0,18 Z',notes:'宽20 高18'},
-    {label:'腰带',qty:2,nw:4,nh:70,path:'M0,0 L4,0 L4,70 L0,70 Z',notes:'宽4 长70'},
-    {label:'颈带',qty:1,nw:4,nh:60,path:'M0,0 L4,0 L4,60 L0,60 Z',notes:'宽4 长60'},
+    {label:'围裙身',qty:1,nw:70,nh:80,path:'M10,0 L60,0 L70,20 L70,80 L0,80 L0,20 Z',notes:'上宽50 下宽70 长80',st:'hem'},
+    {label:'口袋',qty:1,nw:20,nh:18,path:'M0,0 L20,0 L20,18 L0,18 Z',notes:'宽20 高18',st:'topstitch'},
+    {label:'腰带',qty:2,nw:4,nh:70,path:'M0,0 L4,0 L4,70 L0,70 Z',notes:'宽4 长70',st:'strap'},
+    {label:'颈带',qty:1,nw:4,nh:60,path:'M0,0 L4,0 L4,60 L0,60 Z',notes:'宽4 长60',st:'strap'},
   ]},
   {name:'餐垫套装',desc:'餐垫+杯垫',pieces:[
-    {label:'餐垫',qty:1,nw:45,nh:32,path:'M3,0 L42,0 Q45,0 45,3 L45,29 Q45,32 42,32 L3,32 Q0,32 0,29 L0,3 Q0,0 3,0 Z',notes:'宽45 高32 圆角'},
-    {label:'方形杯垫',qty:1,nw:10,nh:10,path:'M0,0 L10,0 L10,10 L0,10 Z',notes:'边长10'},
-    {label:'圆形杯垫',qty:1,nw:10,nh:10,path:'M5,0 A5,5 0 1,1 5,10 A5,5 0 1,1 5,0 Z',notes:'直径10'},
+    {label:'餐垫',qty:1,nw:45,nh:32,path:'M3,0 L42,0 Q45,0 45,3 L45,29 Q45,32 42,32 L3,32 Q0,32 0,29 L0,3 Q0,0 3,0 Z',notes:'宽45 高32 圆角',st:'curve'},
+    {label:'方形杯垫',qty:1,nw:10,nh:10,path:'M0,0 L10,0 L10,10 L0,10 Z',notes:'边长10',st:'side'},
+    {label:'圆形杯垫',qty:1,nw:10,nh:10,path:'M5,0 A5,5 0 1,1 5,10 A5,5 0 1,1 5,0 Z',notes:'直径10',st:'curve'},
   ]},
   {name:'靠垫套',desc:'前片+后片(信封式)',pieces:[
-    {label:'前片',qty:1,nw:45,nh:45,path:'M0,0 L45,0 L45,45 L0,45 Z',notes:'边长45'},
-    {label:'后片A',qty:1,nw:45,nh:28,path:'M0,0 L45,0 L45,28 L0,28 Z',notes:'宽45 高28(含重叠)'},
-    {label:'后片B',qty:1,nw:45,nh:28,path:'M0,0 L45,0 L45,28 L0,28 Z',notes:'宽45 高28(含重叠)'},
+    {label:'前片',qty:1,nw:45,nh:45,path:'M0,0 L45,0 L45,45 L0,45 Z',notes:'边长45',st:'side'},
+    {label:'后片A',qty:1,nw:45,nh:28,path:'M0,0 L45,0 L45,28 L0,28 Z',notes:'宽45 高28(含重叠)',st:'hem'},
+    {label:'后片B',qty:1,nw:45,nh:28,path:'M0,0 L45,0 L45,28 L0,28 Z',notes:'宽45 高28(含重叠)',st:'hem'},
   ]},
   {name:'针插',desc:'表布+底布+填充',pieces:[
-    {label:'表布(圆)',qty:1,nw:12,nh:12,path:'M6,0 A6,6 0 1,1 6,12 A6,6 0 1,1 6,0 Z',notes:'直径12'},
-    {label:'底布(圆)',qty:1,nw:10,nh:10,path:'M5,0 A5,5 0 1,1 5,10 A5,5 0 1,1 5,0 Z',notes:'直径10'},
+    {label:'表布(圆)',qty:1,nw:12,nh:12,path:'M6,0 A6,6 0 1,1 6,12 A6,6 0 1,1 6,0 Z',notes:'直径12',st:'curve'},
+    {label:'底布(圆)',qty:1,nw:10,nh:10,path:'M5,0 A5,5 0 1,1 5,10 A5,5 0 1,1 5,0 Z',notes:'直径10',st:'curve'},
   ]},
 ]},
 {cat:'📐 基础几何布片',items:[
   {name:'方巾/包袱布',desc:'正方形 边长45',pieces:[
-    {label:'方巾',qty:1,nw:45,nh:45,path:'M0,0 L45,0 L45,45 L0,45 Z',notes:'边长45'},
+    {label:'方巾',qty:1,nw:45,nh:45,path:'M0,0 L45,0 L45,45 L0,45 Z',notes:'边长45',st:'hem'},
   ]},
   {name:'圆形布片',desc:'直径36 杯垫/包底',pieces:[
-    {label:'圆形布片',qty:1,nw:36,nh:36,path:'M18,0 A18,18 0 1,1 18,36 A18,18 0 1,1 18,0 Z',notes:'直径36'},
+    {label:'圆形布片',qty:1,nw:36,nh:36,path:'M18,0 A18,18 0 1,1 18,36 A18,18 0 1,1 18,0 Z',notes:'直径36',st:'curve'},
   ]},
   {name:'三角巾',desc:'等边三角形 边长50',pieces:[
-    {label:'三角巾',qty:1,nw:50,nh:43,path:'M25,0 L50,43 L0,43 Z',notes:'边长50 高43'},
+    {label:'三角巾',qty:1,nw:50,nh:43,path:'M25,0 L50,43 L0,43 Z',notes:'边长50 高43',st:'hem'},
   ]},
   {name:'六边形拼布',desc:'边长18 蜂巢拼布',pieces:[
-    {label:'六边形',qty:1,nw:36,nh:31,path:'M9,0 L27,0 L36,15.5 L27,31 L9,31 L0,15.5 Z',notes:'边长18'},
+    {label:'六边形',qty:1,nw:36,nh:31,path:'M9,0 L27,0 L36,15.5 L27,31 L9,31 L0,15.5 Z',notes:'边长18',st:'side'},
   ]},
   {name:'椭圆形布片',desc:'长40×宽28 包底/装饰',pieces:[
-    {label:'椭圆布片',qty:1,nw:40,nh:28,path:'M20,0 A20,14 0 1,1 20,28 A20,14 0 1,1 20,0 Z',notes:'长40 宽28'},
+    {label:'椭圆布片',qty:1,nw:40,nh:28,path:'M20,0 A20,14 0 1,1 20,28 A20,14 0 1,1 20,0 Z',notes:'长40 宽28',st:'curve'},
   ]},
 ]},
 ];
 let cur={ci:0,ii:0};
-const seamEl=document.getElementById('seamInput');
+const fabricEl=document.getElementById('fabricInput');
 const scaleEl=document.getElementById('scaleInput');
 const svgEl=document.getElementById('svgCanvas');
 const listEl=document.getElementById('templateList');
+const seamInfoEl=document.getElementById('seamInfo');
+
+// 缝份计算系统（基于文档：面料×部位）
+const SEAM_TABLE={
+  // seamType: {fabric: width_cm}
+  side:    {woven:1.0, thin:1.2, thick:0.8, knit:0.8},   // 侧缝、肩缝、摆缝
+  armhole: {woven:1.0, thin:1.2, thick:1.0, knit:0.8},   // 袖窿、领窝
+  hem:     {woven:2.5, thin:3.0, thick:2.0, knit:2.0},   // 下摆、袖口折边
+  waist:   {woven:3.0, thin:3.0, thick:2.5, knit:2.5},   // 腰头折边
+  curve:   {woven:0.7, thin:0.8, thick:0.6, knit:0.6},   // 弧形/转角(领角、圆角)
+  topstitch:{woven:0.8,thin:1.0, thick:0.7, knit:0.7},   // 明线止口(门襟、袋盖)
+  overlock:{woven:1.0, thin:1.2, thick:0.8, knit:0.8},   // 包缝
+  fold:    {woven:0.0, thin:0.0, thick:0.0, knit:0.0},   // 对折线(无缝份)
+  strap:   {woven:1.0, thin:1.0, thick:0.8, knit:0.8},   // 带子(对折缝合)
+};
+
+function getSeam(seamType){
+  const fabric=fabricEl.value;
+  return SEAM_TABLE[seamType]?.[fabric] ?? SEAM_TABLE.side[fabric];
+}
+
+function updateSeamInfo(){
+  const fabric=fabricEl.value;
+  const names={side:'侧缝/肩缝',armhole:'袖窿/领窝',hem:'下摆折边',waist:'腰头',curve:'弧形转角',topstitch:'明线止口',overlock:'包缝',strap:'带子'};
+  let html='';
+  for(const[k,v]of Object.entries(names)){
+    html+=`<span style="display:inline-block;margin:1px 6px 1px 0"><b>${v}</b> ${SEAM_TABLE[k][fabric]}cm</span>`;
+  }
+  seamInfoEl.innerHTML=html;
+}
 
 PROJECTS.forEach((c,ci)=>{
   const h=document.createElement('div');
@@ -317,19 +358,19 @@ const printEl=document.getElementById('printMode');
 function draw(){
   if(!cur&&libActive){drawOnline(libActive);return;}
   if(!cur) return;
-  const seam=parseFloat(seamEl.value)||0;
+  updateSeamInfo();
   const isPrint=printEl.checked;
-  // In print mode: 1 SVG unit = 1mm (so nw cm = nw*10 units)
-  // In preview mode: 1 SVG unit = sc pixels per cm
   const PX_PER_CM=isPrint?10:parseInt(scaleEl.value)||4;
   const proj=PROJECTS[cur.ci].items[cur.ii];
   const pieces=proj.pieces;
-  const gap=isPrint?15:40; // mm or px gap between pieces
+  const gap=isPrint?15:40;
   const mg=isPrint?20:60;
-  const seamExtra=seam>0?(isPrint?8:24):0; // extra space for seam dimension lines
+  const hasSeam=pieces.some(p=>getSeam(p.st||'side')>0);
+  const seamExtra=hasSeam?(isPrint?8:24):0;
   const pieceBoxes=[];
 
   pieces.forEach(p=>{
+    const seam=getSeam(p.st||'side');
     const sp=seam*PX_PER_CM;
     const tw=p.nw*PX_PER_CM+sp*2;
     const th=p.nh*PX_PER_CM+sp*2;
@@ -374,7 +415,8 @@ function draw(){
   // title
   const fs=isPrint?4:16, fs2=isPrint?3:11;
   s+=`<text x="${totalW/2}" y="${isPrint?5:26}" text-anchor="middle" font-size="${fs}" fill="#5a3e3e" font-weight="600">${proj.name}</text>`;
-  s+=`<text x="${totalW/2}" y="${isPrint?10:40}" text-anchor="middle" font-size="${fs2}" fill="#b5838d">${proj.desc}${seam>0?' ｜ 缝份'+seam+'cm':''}</text>`;
+  const fabricName={woven:'普通梭织',thin:'薄料',thick:'厚料',knit:'针织'}[fabricEl.value];
+  s+=`<text x="${totalW/2}" y="${isPrint?10:40}" text-anchor="middle" font-size="${fs2}" fill="#b5838d">${proj.desc} ｜ ${fabricName} · 缝份按部位自动分配</text>`;
 
   let cy=titleH+5;
 
@@ -382,8 +424,10 @@ function draw(){
     let cx=Math.max(mg,(totalW-row.w)/2);
     row.items.forEach(b=>{
       const{p,tw,th,sp}=b;
+      const seam=getSeam(p.st||'side');
       const ox=cx+sp;
       const oy=cy+sp;
+      const seamNames={side:'侧缝',armhole:'袖窿',hem:'折边',waist:'腰头',curve:'弧形',topstitch:'明线',overlock:'包缝',fold:'对折',strap:'带子'};
 
       if(seam>0){
         // 缝份轮廓：沿裁片形状等距外扩
@@ -418,6 +462,9 @@ function draw(){
       s+=`<text x="${ox+p.nw*PX_PER_CM/2}" y="${oy+p.nh*PX_PER_CM/2-lfs*.4}" text-anchor="middle" font-size="${lfs}" fill="#5a3e3e" font-weight="600" dominant-baseline="middle">${p.label}${qtyStr}</text>`;
       if(p.notes)
         s+=`<text x="${ox+p.nw*PX_PER_CM/2}" y="${oy+p.nh*PX_PER_CM/2+lfs*.6}" text-anchor="middle" font-size="${nfs}" fill="#b5838d" dominant-baseline="middle">${p.notes}</text>`;
+      // seam type label
+      const seamLabel=seam>0?`${seamNames[p.st]||''}缝份 ${seam}cm`:'无缝份';
+      s+=`<text x="${ox+p.nw*PX_PER_CM/2}" y="${oy+p.nh*PX_PER_CM/2+lfs*1.5}" text-anchor="middle" font-size="${isPrint?1.8:8}" fill="#d4889a" dominant-baseline="middle">${seamLabel}</text>`;
 
       // dimensions
       const dimC='#777',dfs=isPrint?2.2:9,doff=isPrint?3:12,dtoff=isPrint?5:18,dsw=isPrint?.1:.6;
@@ -475,9 +522,10 @@ function draw(){
   svgEl.innerHTML=s;
 }
 
-seamEl.addEventListener('input',draw);
+fabricEl.addEventListener('change',()=>{updateSeamInfo();draw();});
 scaleEl.addEventListener('change',draw);
 printEl.addEventListener('change',draw);
+updateSeamInfo();
 draw();
 
 // === Tab switching ===
