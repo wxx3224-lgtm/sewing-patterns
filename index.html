@@ -89,7 +89,10 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
 <div class="wrap">
   <div class="mobile-bar no-print">
     <h1>🧵 裁片图纸工具</h1>
-    <button class="mobile-toggle" onclick="togglePanel()">展开面板</button>
+    <div style="display:flex;gap:6px">
+      <button class="mobile-toggle" onclick="doPrint()" style="font-size:12px;padding:6px 10px">🖨️</button>
+      <button class="mobile-toggle" onclick="togglePanel()">展开面板</button>
+    </div>
   </div>
   <aside class="no-print collapsed" id="sidePanel">
     <h1>🧵 裁片图纸工具</h1>
@@ -130,7 +133,8 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
 
     <div class="btn-row">
       <button class="btn btn-reset" onclick="document.getElementById('seamInput').value='1.5';draw()">重置缝份</button>
-      <button class="btn btn-print" onclick="document.getElementById('printMode').checked=true;draw();setTimeout(()=>window.print(),100)">🖨️ 打印</button>
+      <button class="btn btn-print" onclick="doPrint()">🖨️ 打印</button>
+      <button class="btn" style="background:#f5e6e9;color:#9d4c5a;flex:.6" onclick="exportImage()">📥 导出</button>
     </div>
   </aside>
   <main><div id="canvas-wrap"><svg id="svgCanvas" xmlns="http://www.w3.org/2000/svg"></svg></div></main>
@@ -745,6 +749,30 @@ function parseText(){
   document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
   drawOnline(parsed);
   collapseOnMobile();
+}
+
+// === Print function (iOS/iPadOS compatible) ===
+function doPrint(){
+  // enable print mode and redraw synchronously
+  printEl.checked=true;
+  draw();
+  // window.print() must be called synchronously in user gesture for iOS Safari
+  window.print();
+  // after print dialog closes, optionally restore preview mode
+  printEl.checked=false;
+  draw();
+}
+
+// === Export SVG as image (fallback for devices without print) ===
+function exportImage(){
+  const svgData=svgEl.outerHTML;
+  const blob=new Blob([svgData],{type:'image/svg+xml'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='裁片图纸.svg';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // === Mobile responsive ===
