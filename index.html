@@ -61,6 +61,7 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
     <div class="tabs">
       <div class="tab active" onclick="switchTab('local')">内置模板</div>
       <div class="tab" onclick="switchTab('online')">在线纸样库</div>
+      <div class="tab" onclick="switchTab('parse')">教程解析</div>
     </div>
 
     <!-- 内置模板面板 -->
@@ -81,6 +82,15 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
       <input type="text" id="libSearch" placeholder="搜索纸样名称或分类..." style="margin-bottom:4px"/>
       <div id="libStatus" style="font-size:10px;color:#aaa"></div>
       <div id="libList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+
+    <!-- 教程解析面板 -->
+    <div id="panelParse" class="tab-panel">
+      <p style="font-size:11px;color:#888;margin-bottom:6px">粘贴小红书/教程文字，自动提取裁片尺寸</p>
+      <textarea id="parseInput" placeholder="示例：&#10;前片 宽48cm 高62cm ×1&#10;后片 48×64 ×1&#10;袖片 38*58cm 需要2片&#10;领口条 长50 宽4&#10;&#10;也支持：&#10;包身 36×38cm 裁2片&#10;提手 6cm×50cm 2条" style="width:100%;height:140px;border:1px solid #f0c4ca;border-radius:8px;padding:8px;font-size:12px;resize:vertical;outline:none;font-family:inherit"></textarea>
+      <button class="btn" style="background:#d4889a;color:#fff;margin-top:6px;padding:8px" onclick="parseText()">🔍 解析并生成图纸</button>
+      <div id="parseResult" style="margin-top:8px;font-size:11px;color:#666"></div>
+      <div id="parseList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-top:6px"></div>
     </div>
 
     <div class="btn-row">
@@ -409,10 +419,12 @@ draw();
 // === Tab switching ===
 function switchTab(tab){
   document.querySelectorAll('.tab').forEach((t,i)=>{
-    t.classList.toggle('active',i===(tab==='local'?0:1));
+    const tabs=['local','online','parse'];
+    t.classList.toggle('active',tabs[i]===tab);
   });
   document.getElementById('panelLocal').classList.toggle('show',tab==='local');
   document.getElementById('panelOnline').classList.toggle('show',tab==='online');
+  document.getElementById('panelParse').classList.toggle('show',tab==='parse');
   if(tab==='online') loadLibrary();
 }
 
@@ -591,6 +603,112 @@ function renderLib(){
 }
 
 libSearch.addEventListener('input',renderLib);
+
+// === Tutorial text parser ===
+function parseText(){
+  const raw=document.getElementById('parseInput').value.trim();
+  if(!raw){document.getElementById('parseResult').textContent='请先粘贴教程文字';return;}
+
+  const lines=raw.split(/\n/).map(l=>l.trim()).filter(l=>l);
+  const pieces=[];
+
+  for(const line of lines){
+    // skip lines that are clearly not piece descriptions
+    if(line.length<3) continue;
+
+    let label='', w=0, h=0, qty=1;
+
+    // try to extract dimensions: various formats
+    // "48×64" "48*64" "48x64" "宽48高64" "宽48cm高64cm" "长50宽4"
+    const dimPatterns=[
+      /(\d+(?:\.\d+)?)\s*[×xX\*]\s*(\d+(?:\.\d+)?)/,                    // 48×64, 48*64, 48x64
+      /宽\s*(\d+(?:\.\d+)?)\s*(?:cm|CM|厘米)?\s*[,，]?\s*高\s*(\d+(?:\.\d+)?)/,  // 宽48高64
+      /长\s*(\d+(?:\.\d+)?)\s*(?:cm|CM|厘米)?\s*[,，]?\s*宽\s*(\d+(?:\.\d+)?)/,  // 长50宽4 → w=宽, h=长
+      /宽\s*(\d+(?:\.\d+)?)\s*(?:cm|CM|厘米)?\s*[,，]?\s*长\s*(\d+(?:\.\d+)?)/,  // 宽4长50
+      /(\d+(?:\.\d+)?)\s*(?:cm|CM|厘米)\s*[×xX\*]\s*(\d+(?:\.\d+)?)/,    // 48cm×64cm
+      /(\d+(?:\.\d+)?)\s*(?:cm|CM|厘米)\s*[,，]\s*(\d+(?:\.\d+)?)/,      // 48cm, 64cm
+    ];
+
+    let dimMatch=null;
+    let isLengthWidth=false;
+    for(let i=0;i<dimPatterns.length;i++){
+      dimMatch=line.match(dimPatterns[i]);
+      if(dimMatch){
+        isLengthWidth=(i===2); // 长×宽 pattern: swap
+        break;
+      }
+    }
+
+    if(!dimMatch) continue; // no dimensions found, skip
+
+    if(isLengthWidth){
+      h=parseFloat(dimMatch[1]); w=parseFloat(dimMatch[2]);
+    }else{
+      w=parseFloat(dimMatch[1]); h=parseFloat(dimMatch[2]);
+    }
+
+    if(w<=0||h<=0||w>500||h>500) continue;
+
+    // extract quantity
+    const qtyPatterns=[
+      /[×xX\*]\s*(\d+)\s*(?:片|块|条|个|份)?/,
+      /(\d+)\s*(?:片|块|条|个|份)/,
+      /裁\s*(\d+)/,
+      /需要\s*(\d+)/,
+      /共\s*(\d+)/,
+    ];
+    // remove the dimension part first to avoid matching dimension numbers as qty
+    let restLine=line.replace(dimPatterns[0]||'','');
+    for(const qp of qtyPatterns){
+      const qm=restLine.match(qp);
+      if(qm){qty=parseInt(qm[1]);if(qty>0&&qty<=20)break;else qty=1;}
+    }
+
+    // extract label: text before the first number or dimension
+    const labelMatch=line.match(/^([^\d×xX\*]+)/);
+    label=labelMatch?labelMatch[1].replace(/[：:,，\s]+$/,'').trim():'裁片';
+    if(!label) label='裁片';
+    // clean up common suffixes
+    label=label.replace(/[（(].*/,'').replace(/尺寸$/,'').replace(/裁剪$/,'').trim();
+    if(!label) label='裁片';
+
+    pieces.push({label,w,h,qty});
+  }
+
+  const resultEl=document.getElementById('parseResult');
+  const listEl=document.getElementById('parseList');
+
+  if(!pieces.length){
+    resultEl.innerHTML='<span style="color:#c27185">未识别到裁片尺寸，请检查格式</span><br><span style="font-size:10px;color:#aaa">支持格式：名称 宽×高、名称 宽48高64、名称 48cm×64cm</span>';
+    listEl.innerHTML='';
+    return;
+  }
+
+  resultEl.innerHTML=`<span style="color:#5a9d5a">✓ 识别到 ${pieces.length} 个裁片</span>`;
+
+  // show parsed pieces
+  listEl.innerHTML='';
+  pieces.forEach((pc,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 0;border-bottom:1px solid #f5e6e9';
+    d.innerHTML=`<span style="color:#5a3e3e;font-weight:500;min-width:60px">${pc.label}</span>
+      <span class="lib-badge">${pc.w}×${pc.h}cm</span>
+      <span style="color:#888">×${pc.qty}</span>`;
+    listEl.appendChild(d);
+  });
+
+  // generate pattern
+  const parsed={
+    name:'教程解析',
+    description:'从粘贴文字中提取',
+    source:'手动输入',
+    pieces:pieces
+  };
+  cur=null;
+  libActive=parsed;
+  document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
+  drawOnline(parsed);
+}
 </script>
 </body>
 </html>
