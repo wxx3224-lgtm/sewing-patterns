@@ -5,12 +5,38 @@
   "patterns": [
     {
       "id": "fs-aaron",
-      "name": "Aaron A-shirt",
+      "name": "Aaron A字背心",
       "category": "上衣",
       "description": "基础A字背心",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/aaron",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 1,
+          "w": 46,
+          "h": 60
+        },
+        {
+          "label": "后片",
+          "qty": 1,
+          "w": 46,
+          "h": 62
+        },
+        {
+          "label": "领口包边",
+          "qty": 1,
+          "w": 48,
+          "h": 3
+        },
+        {
+          "label": "袖口包边",
+          "qty": 2,
+          "w": 28,
+          "h": 3
+        }
+      ]
     },
     {
       "id": "fs-albert",
@@ -19,7 +45,33 @@
       "description": "经典围裙，含口袋和绑带",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/albert",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "围裙身",
+          "qty": 1,
+          "w": 70,
+          "h": 80
+        },
+        {
+          "label": "口袋",
+          "qty": 1,
+          "w": 20,
+          "h": 18
+        },
+        {
+          "label": "腰带",
+          "qty": 2,
+          "w": 4,
+          "h": 70
+        },
+        {
+          "label": "颈带",
+          "qty": 1,
+          "w": 4,
+          "h": 60
+        }
+      ]
     },
     {
       "id": "fs-bella",
@@ -28,7 +80,21 @@
       "description": "女装合体上衣原型，含胸省腰省",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/bella",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 1,
+          "w": 48,
+          "h": 58
+        },
+        {
+          "label": "后片",
+          "qty": 1,
+          "w": 48,
+          "h": 60
+        }
+      ]
     },
     {
       "id": "fs-breanna",
@@ -37,7 +103,27 @@
       "description": "女装宽松上衣原型",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/breanna",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 1,
+          "w": 50,
+          "h": 62
+        },
+        {
+          "label": "后片",
+          "qty": 1,
+          "w": 50,
+          "h": 64
+        },
+        {
+          "label": "袖片",
+          "qty": 2,
+          "w": 38,
+          "h": 58
+        }
+      ]
     },
     {
       "id": "fs-bruce",
@@ -46,7 +132,27 @@
       "description": "男士拳击短裤",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/bruce",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 2,
+          "w": 30,
+          "h": 38
+        },
+        {
+          "label": "后片",
+          "qty": 2,
+          "w": 32,
+          "h": 40
+        },
+        {
+          "label": "腰头",
+          "qty": 1,
+          "w": 80,
+          "h": 6
+        }
+      ]
     },
     {
       "id": "fs-charlie",
@@ -55,7 +161,39 @@
       "description": "五袋休闲长裤",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/charlie",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "裤前片",
+          "qty": 2,
+          "w": 32,
+          "h": 100
+        },
+        {
+          "label": "裤后片",
+          "qty": 2,
+          "w": 34,
+          "h": 102
+        },
+        {
+          "label": "腰头",
+          "qty": 1,
+          "w": 80,
+          "h": 8
+        },
+        {
+          "label": "前口袋布",
+          "qty": 2,
+          "w": 18,
+          "h": 20
+        },
+        {
+          "label": "后口袋",
+          "qty": 2,
+          "w": 14,
+          "h": 16
+        }
+      ]
     },
     {
       "id": "fs-diana",
@@ -64,7 +202,33 @@
       "description": "裹身连衣裙",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/diana",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 2,
+          "w": 48,
+          "h": 95
+        },
+        {
+          "label": "后片",
+          "qty": 1,
+          "w": 48,
+          "h": 97
+        },
+        {
+          "label": "袖片",
+          "qty": 2,
+          "w": 36,
+          "h": 50
+        },
+        {
+          "label": "腰带",
+          "qty": 1,
+          "w": 160,
+          "h": 6
+        }
+      ]
     },
     {
       "id": "fs-florence",
@@ -73,7 +237,27 @@
       "description": "立体口罩",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/florence",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "外层",
+          "qty": 2,
+          "w": 18,
+          "h": 14
+        },
+        {
+          "label": "内层",
+          "qty": 2,
+          "w": 17,
+          "h": 13
+        },
+        {
+          "label": "鼻梁条通道",
+          "qty": 1,
+          "w": 10,
+          "h": 3
+        }
+      ]
     },
     {
       "id": "fs-hortensia",
@@ -82,7 +266,39 @@
       "description": "拉链手提包，含侧片和底片",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/hortensia",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前后片",
+          "qty": 2,
+          "w": 30,
+          "h": 24
+        },
+        {
+          "label": "侧片",
+          "qty": 2,
+          "w": 10,
+          "h": 24
+        },
+        {
+          "label": "底片",
+          "qty": 1,
+          "w": 30,
+          "h": 10
+        },
+        {
+          "label": "拉链挡片",
+          "qty": 2,
+          "w": 30,
+          "h": 3
+        },
+        {
+          "label": "提手",
+          "qty": 2,
+          "w": 4,
+          "h": 35
+        }
+      ]
     },
     {
       "id": "fs-hugo",
@@ -91,7 +307,45 @@
       "description": "连帽卫衣，含插肩袖",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/hugo",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 1,
+          "w": 52,
+          "h": 68
+        },
+        {
+          "label": "后片",
+          "qty": 1,
+          "w": 52,
+          "h": 70
+        },
+        {
+          "label": "袖片",
+          "qty": 2,
+          "w": 42,
+          "h": 62
+        },
+        {
+          "label": "帽子侧片",
+          "qty": 2,
+          "w": 28,
+          "h": 32
+        },
+        {
+          "label": "帽子中片",
+          "qty": 1,
+          "w": 14,
+          "h": 34
+        },
+        {
+          "label": "口袋",
+          "qty": 1,
+          "w": 36,
+          "h": 20
+        }
+      ]
     },
     {
       "id": "fs-lucy",
@@ -100,7 +354,33 @@
       "description": "系带口袋裙",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/lucy",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "裙片",
+          "qty": 2,
+          "w": 50,
+          "h": 60
+        },
+        {
+          "label": "口袋",
+          "qty": 2,
+          "w": 18,
+          "h": 22
+        },
+        {
+          "label": "腰头",
+          "qty": 1,
+          "w": 74,
+          "h": 8
+        },
+        {
+          "label": "系带",
+          "qty": 2,
+          "w": 4,
+          "h": 80
+        }
+      ]
     },
     {
       "id": "fs-penelope",
@@ -109,7 +389,27 @@
       "description": "高腰铅笔裙",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/penelope",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前裙片",
+          "qty": 1,
+          "w": 46,
+          "h": 65
+        },
+        {
+          "label": "后裙片",
+          "qty": 2,
+          "w": 24,
+          "h": 65
+        },
+        {
+          "label": "腰头",
+          "qty": 1,
+          "w": 70,
+          "h": 8
+        }
+      ]
     },
     {
       "id": "fs-sandy",
@@ -118,7 +418,21 @@
       "description": "圆裙/半圆裙",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/sandy",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "裙片",
+          "qty": 2,
+          "w": 72,
+          "h": 72
+        },
+        {
+          "label": "腰头",
+          "qty": 1,
+          "w": 70,
+          "h": 8
+        }
+      ]
     },
     {
       "id": "fs-simon",
@@ -127,7 +441,51 @@
       "description": "经典男士衬衫",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/simon",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 2,
+          "w": 50,
+          "h": 72
+        },
+        {
+          "label": "后片",
+          "qty": 1,
+          "w": 50,
+          "h": 74
+        },
+        {
+          "label": "袖片",
+          "qty": 2,
+          "w": 40,
+          "h": 62
+        },
+        {
+          "label": "领座",
+          "qty": 1,
+          "w": 42,
+          "h": 5
+        },
+        {
+          "label": "领面",
+          "qty": 1,
+          "w": 44,
+          "h": 8
+        },
+        {
+          "label": "袖克夫",
+          "qty": 2,
+          "w": 26,
+          "h": 7
+        },
+        {
+          "label": "门襟",
+          "qty": 1,
+          "w": 4,
+          "h": 72
+        }
+      ]
     },
     {
       "id": "fs-sven",
@@ -136,7 +494,45 @@
       "description": "圆领卫衣",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/sven",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 1,
+          "w": 52,
+          "h": 66
+        },
+        {
+          "label": "后片",
+          "qty": 1,
+          "w": 52,
+          "h": 68
+        },
+        {
+          "label": "袖片",
+          "qty": 2,
+          "w": 42,
+          "h": 60
+        },
+        {
+          "label": "领口罗纹",
+          "qty": 1,
+          "w": 44,
+          "h": 6
+        },
+        {
+          "label": "下摆罗纹",
+          "qty": 1,
+          "w": 96,
+          "h": 8
+        },
+        {
+          "label": "袖口罗纹",
+          "qty": 2,
+          "w": 22,
+          "h": 8
+        }
+      ]
     },
     {
       "id": "fs-tamiko",
@@ -145,7 +541,15 @@
       "description": "零浪费T恤",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/tamiko",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "主体布片",
+          "qty": 1,
+          "w": 90,
+          "h": 60
+        }
+      ]
     },
     {
       "id": "fs-teagan",
@@ -154,7 +558,33 @@
       "description": "基础合体T恤",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/teagan",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 1,
+          "w": 48,
+          "h": 62
+        },
+        {
+          "label": "后片",
+          "qty": 1,
+          "w": 48,
+          "h": 64
+        },
+        {
+          "label": "袖片",
+          "qty": 2,
+          "w": 38,
+          "h": 22
+        },
+        {
+          "label": "领口条",
+          "qty": 1,
+          "w": 50,
+          "h": 4
+        }
+      ]
     },
     {
       "id": "fs-titan",
@@ -163,7 +593,21 @@
       "description": "裤装基础原型",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/titan",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "裤前片",
+          "qty": 2,
+          "w": 30,
+          "h": 100
+        },
+        {
+          "label": "裤后片",
+          "qty": 2,
+          "w": 32,
+          "h": 102
+        }
+      ]
     },
     {
       "id": "fs-wahid",
@@ -172,7 +616,27 @@
       "description": "经典西装马甲",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/wahid",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 2,
+          "w": 44,
+          "h": 56
+        },
+        {
+          "label": "后片",
+          "qty": 1,
+          "w": 44,
+          "h": 54
+        },
+        {
+          "label": "口袋嵌线",
+          "qty": 2,
+          "w": 14,
+          "h": 4
+        }
+      ]
     },
     {
       "id": "fs-yuri",
@@ -181,7 +645,39 @@
       "description": "拉链连帽衫",
       "source": "FreeSewing (MIT License)",
       "url": "https://freesewing.eu/designs/yuri",
-      "difficulty": "unknown"
+      "difficulty": "unknown",
+      "pieces": [
+        {
+          "label": "前片",
+          "qty": 2,
+          "w": 50,
+          "h": 66
+        },
+        {
+          "label": "后片",
+          "qty": 1,
+          "w": 50,
+          "h": 68
+        },
+        {
+          "label": "袖片",
+          "qty": 2,
+          "w": 42,
+          "h": 60
+        },
+        {
+          "label": "帽子",
+          "qty": 2,
+          "w": 28,
+          "h": 32
+        },
+        {
+          "label": "口袋",
+          "qty": 2,
+          "w": 18,
+          "h": 20
+        }
+      ]
     },
     {
       "id": "cn-tote-basic",
