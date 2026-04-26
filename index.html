@@ -59,6 +59,20 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
   .tab{font-size:11px;padding:8px 0}
   .btn-row{position:sticky;bottom:0;background:#fff;padding:10px 0 4px;border-top:1px solid #f5e6e9}
 }
+/* iPad 竖屏 (769-1024px): 侧边栏加宽，保持左右布局 */
+@media(min-width:769px) and (max-width:1024px){
+  aside{width:320px;padding:14px}
+  main{padding:16px}
+  .tab{font-size:11px;padding:7px 0}
+  .tpl-card{padding:8px 10px}
+  .tpl-name{font-size:13px}
+  .tpl-desc{font-size:11px}
+  #canvas-wrap{padding:16px}
+}
+/* iPad 横屏 / 小笔记本 (1025-1366px): 侧边栏更宽敞 */
+@media(min-width:1025px) and (max-width:1366px){
+  aside{width:340px}
+}
 @media print{
   aside,.no-print,.mobile-bar{display:none!important}
   body{background:#fff!important;margin:0;padding:0}
@@ -313,7 +327,7 @@ function draw(){
   });
 
   // A4 printable area in mm: ~194 x ~277 (with 8mm margins)
-  const maxRowW=isPrint?194*10/10:900; // 194mm in print, 900px in preview
+  const maxRowW=isPrint?194*10/10:Math.min(900,window.innerWidth-(window.innerWidth>768?380:40));
   const rows=[];
   let rowItems=[],rowW=0,rowH=0;
   pieceBoxes.forEach(b=>{
@@ -483,7 +497,7 @@ function drawOnline(p){
     return{pc,tw:pc.w*PX+sp*2,th:pc.h*PX+sp*2,sp};
   });
 
-  const maxRowW=isPrint?194:900;
+  const maxRowW=isPrint?194:Math.min(900,window.innerWidth-(window.innerWidth>768?380:40));
   const rows=[];
   let ri=[],rw=0,rh=0;
   boxes.forEach(b=>{
@@ -751,10 +765,11 @@ function collapseOnMobile(){
   }
 }
 
-// on desktop, always show panel
+// on desktop/iPad, always show panel
 if(!isMobile()) sidePanel.classList.remove('collapsed');
 window.addEventListener('resize',()=>{
   if(!isMobile()) sidePanel.classList.remove('collapsed');
+  draw(); // redraw on resize/rotation for responsive layout
 });
 
 // patch local template clicks to auto-collapse on mobile
