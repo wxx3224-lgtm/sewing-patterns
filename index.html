@@ -385,9 +385,18 @@ function draw(){
       const ox=cx+sp;
       const oy=cy+sp;
 
-      if(seam>0)
-        s+=`<rect x="${cx}" y="${cy}" width="${tw}" height="${th}" fill="none" stroke="#d4a0a0" stroke-width="${isPrint?.2:.8}" stroke-dasharray="${isPrint?'2,1':'5,3'}" rx="${isPrint?1:2}"/>`;
+      if(seam>0){
+        // 缝份轮廓：沿裁片形状等距外扩
+        // stroke画在路径中心线上，宽度=缝份×2，外半部分就是缝份区域
+        // 用白色填充覆盖内半部分，只留外半部分虚线可见
+        const sw=seam*PX_PER_CM*2;
+        s+=`<g transform="translate(${ox},${oy}) scale(${PX_PER_CM})">`;
+        s+=`<path d="${p.path}" fill="none" stroke="#d4a0a0" stroke-width="${sw/PX_PER_CM}" stroke-dasharray="${(isPrint?2:5)/PX_PER_CM},${(isPrint?1:3)/PX_PER_CM}" stroke-linejoin="round" stroke-linecap="round"/>`;
+        s+=`<path d="${p.path}" fill="${isPrint?'#fff':'#fff8f8'}" stroke="none"/>`;
+        s+=`</g>`;
+      }
 
+      // 净尺寸裁片轮廓
       s+=`<g transform="translate(${ox},${oy}) scale(${PX_PER_CM})">`;
       s+=`<path d="${p.path}" fill="${isPrint?'none':'#fff8f8'}" stroke="#5a3e3e" stroke-width="${(isPrint?.08:1.2)/PX_PER_CM}" stroke-linejoin="round"/>`;
       s+=`</g>`;
@@ -550,7 +559,10 @@ function drawOnline(p){
     row.items.forEach(b=>{
       const{pc,tw,th,sp}=b;
       const ox=cx+sp,oy=cy+sp;
-      if(seam>0) s+=`<rect x="${cx}" y="${cy}" width="${tw}" height="${th}" fill="none" stroke="#d4a0a0" stroke-width="${isPrint?.2:.8}" stroke-dasharray="${isPrint?'2,1':'5,3'}" rx="${isPrint?1:2}"/>`;
+      if(seam>0){
+        const seamStroke=seam*PX*2;
+        s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="none" stroke="#d4a0a0" stroke-width="${seamStroke/PX}" stroke-dasharray="${(isPrint?2:5)/PX},${(isPrint?1:3)/PX}" stroke-linejoin="round" stroke-linecap="round"/></g>`;
+      }
       s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="${isPrint?'none':'#fff8f8'}" stroke="#5a3e3e" stroke-width="${(isPrint?.08:1.2)/PX}" stroke-linejoin="round"/></g>`;
 
       // grain arrow
