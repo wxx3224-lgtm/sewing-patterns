@@ -42,13 +42,30 @@ input:focus,select:focus{border-color:#d4889a;box-shadow:0 0 0 3px rgba(212,136,
 .btn-print{background:#d4889a;color:#fff}.btn-print:hover{background:#c27185}
 .btn-reset{background:#f5e6e9;color:#9d4c5a}.btn-reset:hover{background:#f0d4da}
 main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow:auto}
-#canvas-wrap{background:#fff;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.04);border:1px solid #f5d5d9;padding:20px;display:inline-block}
+#canvas-wrap{background:#fff;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,.04);border:1px solid #f5d5d9;padding:20px;display:inline-block;max-width:100%;overflow-x:auto}
+#canvas-wrap svg{max-width:100%;height:auto}
+.mobile-bar{display:none;background:#fff;border-bottom:1px solid #f5d5d9;padding:10px 16px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.mobile-bar h1{font-size:15px;font-weight:600;color:#9d4c5a}
+.mobile-toggle{background:#fff0f3;border:1px solid #f0c4ca;border-radius:8px;padding:6px 14px;font-size:13px;color:#c27185;cursor:pointer}
+.mobile-toggle:active{background:#f5d5d9}
+@media(max-width:768px){
+  .wrap{flex-direction:column}
+  aside{width:100%;max-height:none;border-right:none;border-bottom:1px solid #f5d5d9;overflow-y:visible}
+  aside.collapsed{display:none}
+  .mobile-bar{display:flex}
+  aside h1{display:none}
+  main{padding:12px}
+  #canvas-wrap{padding:10px;border-radius:8px}
+  .tab{font-size:11px;padding:8px 0}
+  .btn-row{position:sticky;bottom:0;background:#fff;padding:10px 0 4px;border-top:1px solid #f5e6e9}
+}
 @media print{
-  aside,.no-print{display:none!important}
+  aside,.no-print,.mobile-bar{display:none!important}
   body{background:#fff!important;margin:0;padding:0}
   .wrap{display:block}
   main{padding:5mm;display:block}
-  #canvas-wrap{border:none!important;box-shadow:none!important;margin:0!important;padding:0!important;border-radius:0!important}
+  #canvas-wrap{border:none!important;box-shadow:none!important;margin:0!important;padding:0!important;border-radius:0!important;max-width:none!important;overflow:visible!important}
+  #canvas-wrap svg{max-width:none!important}
   #svgCanvas{width:auto!important;height:auto!important}
   @page{size:A4;margin:8mm}
 }
@@ -56,7 +73,11 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
 </head>
 <body>
 <div class="wrap">
-  <aside class="no-print">
+  <div class="mobile-bar no-print">
+    <h1>🧵 裁片图纸工具</h1>
+    <button class="mobile-toggle" onclick="togglePanel()">展开面板</button>
+  </div>
+  <aside class="no-print collapsed" id="sidePanel">
     <h1>🧵 裁片图纸工具</h1>
     <div class="tabs">
       <div class="tab active" onclick="switchTab('local')">内置模板</div>
@@ -444,6 +465,7 @@ function useOnlinePattern(p){
   document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
   cur=null;
   drawOnline(p);
+  collapseOnMobile();
 }
 
 function rectPath(w,h){return `M0,0 L${w},0 L${w},${h} L0,${h} Z`;}
@@ -708,7 +730,38 @@ function parseText(){
   libActive=parsed;
   document.querySelectorAll('.tpl-card').forEach(c=>c.classList.remove('active'));
   drawOnline(parsed);
+  collapseOnMobile();
 }
+
+// === Mobile responsive ===
+const sidePanel=document.getElementById('sidePanel');
+const isMobile=()=>window.innerWidth<=768;
+
+function togglePanel(){
+  sidePanel.classList.toggle('collapsed');
+  const btn=document.querySelector('.mobile-toggle');
+  btn.textContent=sidePanel.classList.contains('collapsed')?'展开面板':'收起面板';
+}
+
+function collapseOnMobile(){
+  if(isMobile()){
+    sidePanel.classList.add('collapsed');
+    document.querySelector('.mobile-toggle').textContent='展开面板';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+// on desktop, always show panel
+if(!isMobile()) sidePanel.classList.remove('collapsed');
+window.addEventListener('resize',()=>{
+  if(!isMobile()) sidePanel.classList.remove('collapsed');
+});
+
+// patch local template clicks to auto-collapse on mobile
+document.querySelectorAll('.tpl-card').forEach(card=>{
+  const origClick=card.onclick;
+  card.onclick=function(e){origClick.call(this,e);collapseOnMobile();};
+});
 </script>
 </body>
 </html>
