@@ -142,52 +142,57 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
 <script>
 const PROJECTS=[
 {cat:'👗 女装成衣',items:[
-  {name:'基础T恤',desc:'前片+后片+袖×2+领口条',pieces:[
-    {label:'前片',qty:1,nw:48,nh:62,path:'M0,14 Q0,0 14,0 L42,0 Q48,0 48,6 L48,58 Q48,62 46,62 L34,62 Q24,59 14,62 L2,62 Q0,62 0,58 Z',notes:'半胸围48 衣长62'},
-    {label:'后片',qty:1,nw:48,nh:64,path:'M0,8 Q0,0 8,0 L40,0 Q48,0 48,8 L48,60 Q48,64 46,64 L2,64 Q0,64 0,60 Z',notes:'半胸围48 后中长64'},
-    {label:'袖片',qty:2,nw:38,nh:58,path:'M0,16 Q11,0 19,-2 Q27,0 38,16 L35,58 L3,58 Z',notes:'袖山高16 袖长58'},
-    {label:'领口条',qty:1,nw:50,nh:4,path:'M0,0 L50,0 L50,4 L0,4 Z',notes:'长50 宽4 (弹力布)'},
+  {name:'基础T恤',desc:'前片+后片+袖×2+领口条+下摆贴边',pieces:[
+    {label:'前片',qty:1,nw:45,nh:62,path:'M0,14 Q0,0 14,0 L39,0 Q45,0 45,6 L45,58 Q45,62 43,62 L31,62 Q22,59 14,62 L2,62 Q0,62 0,58 Z',notes:'半胸围45 衣长62 ⊕对折裁'},
+    {label:'后片',qty:1,nw:45,nh:64,path:'M0,8 Q0,0 8,0 L37,0 Q45,0 45,8 L45,60 Q45,64 43,64 L2,64 Q0,64 0,60 Z',notes:'半胸围45 后中长64 ⊕对折裁'},
+    {label:'袖片',qty:2,nw:38,nh:58,path:'M0,16 Q11,0 19,-2 Q27,0 38,16 L35,58 L3,58 Z',notes:'袖山高16 袖长58 ⊕对折裁'},
+    {label:'领口条',qty:1,nw:48,nh:4,path:'M0,0 L48,0 L48,4 L0,4 Z',notes:'长48 宽4 弹力布'},
+    {label:'下摆贴边',qty:1,nw:45,nh:4,path:'M0,0 L45,0 L45,4 L0,4 Z',notes:'宽45 高4 ⊕对折裁'},
   ]},
   {name:'泡泡袖上衣',desc:'前片+后片+泡泡袖×2',pieces:[
-    {label:'前片',qty:1,nw:46,nh:55,path:'M0,14 Q0,0 14,0 L40,0 Q46,0 46,6 L46,51 Q46,55 44,55 L2,55 Q0,55 0,51 Z',notes:'半胸围46 衣长55'},
-    {label:'后片',qty:1,nw:46,nh:57,path:'M0,8 Q0,0 8,0 L38,0 Q46,0 46,8 L46,53 Q46,57 44,57 L2,57 Q0,57 0,53 Z',notes:'半胸围46 后中长57'},
-    {label:'泡泡袖',qty:2,nw:44,nh:28,path:'M0,12 Q11,-4 22,-4 Q33,-4 44,12 L48,28 Q22,34 -4,28 Z',notes:'袖山高12 袖长28'},
+    {label:'前片',qty:1,nw:44,nh:55,path:'M0,14 Q0,0 14,0 L38,0 Q44,0 44,6 L44,51 Q44,55 42,55 L2,55 Q0,55 0,51 Z',notes:'半胸围44 衣长55 ⊕对折裁'},
+    {label:'后片',qty:1,nw:44,nh:57,path:'M0,8 Q0,0 8,0 L36,0 Q44,0 44,8 L44,53 Q44,57 42,57 L2,57 Q0,57 0,53 Z',notes:'半胸围44 后中长57 ⊕对折裁'},
+    {label:'泡泡袖',qty:2,nw:48,nh:34,path:'M4,12 Q15,-4 24,-4 Q33,-4 44,12 L48,28 Q24,34 0,28 Z',notes:'袖山高16 袖宽40 袖长28'},
   ]},
-  {name:'插肩袖T恤',desc:'前片+后片(含袖一体)',pieces:[
-    {label:'前片(含袖)',qty:1,nw:68,nh:65,path:'M0,0 L68,0 L68,30 L50,30 L50,61 Q50,65 48,65 L20,65 Q18,65 18,61 L18,30 L0,30 Z',notes:'含袖展开宽68 衣长65'},
-    {label:'后片(含袖)',qty:1,nw:68,nh:67,path:'M0,0 L68,0 L68,30 L50,30 L50,63 Q50,67 48,67 L20,67 Q18,67 18,63 L18,30 L0,30 Z',notes:'含袖展开宽68 后中长67'},
-    {label:'领口罗纹',qty:1,nw:44,nh:4,path:'M0,0 L44,0 L44,4 L0,4 Z',notes:'长44 宽4'},
+  {name:'插肩袖T恤',desc:'前片+后片(含袖一体)+领口罗纹',pieces:[
+    {label:'前片(含袖)',qty:1,nw:64,nh:65,path:'M0,0 L64,0 L64,28 L46,28 L46,61 Q46,65 44,65 L20,65 Q18,65 18,61 L18,28 L0,28 Z',notes:'含袖展开宽64 衣长65 ⊕对折裁'},
+    {label:'后片(含袖)',qty:1,nw:64,nh:67,path:'M0,0 L64,0 L64,28 L46,28 L46,63 Q46,67 44,67 L20,67 Q18,67 18,63 L18,28 L0,28 Z',notes:'含袖展开宽64 后中长67 ⊕对折裁'},
+    {label:'领口罗纹',qty:1,nw:42,nh:4,path:'M0,0 L42,0 L42,4 L0,4 Z',notes:'长42 宽4'},
   ]},
   {name:'A字裙',desc:'前裙片+后裙片+腰头',pieces:[
-    {label:'前裙片',qty:1,nw:52,nh:60,path:'M9,0 L43,0 L52,60 L0,60 Z',notes:'腰宽34 摆宽52 裙长60'},
-    {label:'后裙片',qty:1,nw:52,nh:60,path:'M9,0 L43,0 L52,60 L0,60 Z',notes:'腰宽34 摆宽52 裙长60'},
+    {label:'前裙片',qty:1,nw:50,nh:60,path:'M8,0 L42,0 L50,60 L0,60 Z',notes:'腰宽34 摆宽50 裙长60 ⊕对折裁'},
+    {label:'后裙片',qty:1,nw:50,nh:60,path:'M8,0 L42,0 L50,60 L0,60 Z',notes:'腰宽34 摆宽50 裙长60 ⊕对折裁'},
+    {label:'腰头',qty:1,nw:70,nh:8,path:'M0,0 L70,0 L70,8 L0,8 Z',notes:'腰围70 宽8(对折4) 含搭门2'},
+  ]},
+  {name:'直筒裙',desc:'前裙片+后裙片+腰头+后开衩贴边',pieces:[
+    {label:'前裙片',qty:1,nw:46,nh:65,path:'M2,0 L44,0 L46,65 L0,65 Z',notes:'半臀围46 裙长65 ⊕对折裁'},
+    {label:'后裙片',qty:2,nw:24,nh:65,path:'M0,0 L24,0 L24,65 L0,65 Z',notes:'1/4臀围24 裙长65 后中开缝'},
     {label:'腰头',qty:1,nw:70,nh:8,path:'M0,0 L70,0 L70,8 L0,8 Z',notes:'腰围70 宽8(对折4)'},
+    {label:'后开衩贴边',qty:2,nw:4,nh:18,path:'M0,0 L4,0 L4,18 L0,18 Z',notes:'宽4 长18'},
   ]},
-  {name:'直筒裙',desc:'前裙片+后裙片+腰头',pieces:[
-    {label:'前裙片',qty:1,nw:46,nh:65,path:'M2,0 L44,0 L46,65 L0,65 Z',notes:'半臀围46 裙长65'},
-    {label:'后裙片',qty:1,nw:46,nh:65,path:'M2,0 L44,0 L46,65 L0,65 Z',notes:'半臀围46 裙长65'},
-    {label:'腰头',qty:1,nw:68,nh:8,path:'M0,0 L68,0 L68,8 L0,8 Z',notes:'腰围68 宽8(对折4)'},
-  ]},
-  {name:'直筒裤',desc:'前片×2+后片×2+腰头',pieces:[
+  {name:'直筒裤',desc:'前片×2+后片×2+腰头+门襟挡',pieces:[
     {label:'裤前片',qty:2,nw:48,nh:100,path:'M6,0 L36,0 L36,38 L48,48 L48,100 L0,100 L0,48 L6,38 Z',notes:'半腰围30 裤长100'},
     {label:'裤后片',qty:2,nw:55,nh:100,path:'M8,0 L40,0 L40,36 L55,48 L55,100 L0,100 L0,48 L8,36 Z',notes:'半臀围32 裤长100'},
     {label:'腰头',qty:1,nw:72,nh:8,path:'M0,0 L72,0 L72,8 L0,8 Z',notes:'腰围72 宽8(对折4)'},
+    {label:'门襟挡',qty:1,nw:8,nh:18,path:'M0,0 L8,0 L8,18 L0,18 Z',notes:'宽8 长18'},
   ]},
-  {name:'五分阔腿裤',desc:'前片×2+后片×2+腰头',pieces:[
+  {name:'五分阔腿裤',desc:'前片×2+后片×2+松紧腰头',pieces:[
     {label:'裤前片',qty:2,nw:50,nh:55,path:'M6,0 L40,0 L40,20 L50,28 L50,55 L0,55 L0,28 L6,20 Z',notes:'半臀围34 裤长55'},
     {label:'裤后片',qty:2,nw:56,nh:55,path:'M8,0 L44,0 L44,18 L56,28 L56,55 L0,55 L0,28 L8,18 Z',notes:'半臀围36 裤长55'},
-    {label:'腰头',qty:1,nw:72,nh:10,path:'M0,0 L72,0 L72,10 L0,10 Z',notes:'腰围72 宽10(含松紧通道)'},
+    {label:'松紧腰头',qty:1,nw:90,nh:10,path:'M0,0 L90,0 L90,10 L0,10 Z',notes:'腰围90(含松紧余量) 宽10 对折含通道'},
   ]},
-  {name:'连衣裙',desc:'前片+后片+袖×2+腰带',pieces:[
-    {label:'前片',qty:1,nw:52,nh:90,path:'M2,14 Q2,0 16,0 L44,0 Q50,0 50,6 L50,34 Q49,38 47,40 L52,90 L0,90 L5,40 Q3,38 2,34 Z',notes:'胸围48 全长90'},
-    {label:'后片',qty:1,nw:52,nh:92,path:'M2,8 Q2,0 10,0 L42,0 Q50,0 50,8 L50,36 Q49,40 47,42 L52,92 L0,92 L5,42 Q3,40 2,36 Z',notes:'胸围48 后中长92'},
-    {label:'袖片',qty:2,nw:36,nh:50,path:'M0,14 Q10,0 18,-2 Q26,0 36,14 L33,50 L3,50 Z',notes:'袖山高14 袖长50'},
+  {name:'连衣裙',desc:'前片+后片+袖×2+腰带+后拉链贴边',pieces:[
+    {label:'前片',qty:1,nw:46,nh:90,path:'M2,14 Q2,0 14,0 L40,0 Q46,0 46,6 L46,34 Q45,38 43,40 L46,90 L0,90 L3,40 Q1,38 0,34 Z',notes:'半胸围44 全长90 ⊕对折裁'},
+    {label:'后片',qty:2,nw:24,nh:92,path:'M0,8 Q0,0 8,0 L24,0 L24,92 L0,92 Z',notes:'1/4胸围24 后中长92 后中开缝'},
+    {label:'袖片',qty:2,nw:36,nh:50,path:'M0,14 Q10,0 18,-2 Q26,0 36,14 L33,50 L3,50 Z',notes:'袖山高14 袖长50 ⊕对折裁'},
     {label:'腰带',qty:1,nw:74,nh:6,path:'M0,0 L74,0 L74,6 L0,6 Z',notes:'长74 宽6'},
+    {label:'后拉链贴边',qty:2,nw:3,nh:50,path:'M0,0 L3,0 L3,50 L0,50 Z',notes:'宽3 长50'},
   ]},
 ]},
 {cat:'👜 包袋与收纳',items:[
-  {name:'托特包',desc:'包身×2+提手×2+包底',pieces:[
-    {label:'包身',qty:2,nw:36,nh:38,path:'M0,0 L36,0 L36,38 L0,38 Z',notes:'宽36 高38'},
+  {name:'托特包',desc:'表布×2+里布×2+提手×2+包底',pieces:[
+    {label:'表布',qty:2,nw:36,nh:38,path:'M0,0 L36,0 L36,38 L0,38 Z',notes:'宽36 高38'},
+    {label:'里布',qty:2,nw:36,nh:38,path:'M0,0 L36,0 L36,38 L0,38 Z',notes:'宽36 高38'},
     {label:'提手',qty:2,nw:6,nh:50,path:'M0,0 L6,0 L6,50 L0,50 Z',notes:'宽6(对折3) 长50'},
     {label:'包底',qty:1,nw:36,nh:12,path:'M0,0 L36,0 L36,12 L0,12 Z',notes:'宽36 深12'},
   ]},
@@ -456,7 +461,7 @@ function draw(){
   // footer
   const ffs=isPrint?2.5:10;
   if(seam>0)
-    s+=`<text x="${totalW/2}" y="${totalH-(isPrint?3:10)}" text-anchor="middle" font-size="${ffs}" fill="#b5838d">- - - 虚线为缝份线（缝份 ${seam}cm）- - -</text>`;
+    s+=`<text x="${totalW/2}" y="${totalH-(isPrint?3:10)}" text-anchor="middle" font-size="${ffs}" fill="#b5838d">- - - 虚线为缝份线（缝份 ${seam}cm · 曲线处缝份请沿轮廓等距外扩）- - -</text>`;
 
   svgEl.innerHTML=s;
 }
@@ -506,6 +511,7 @@ function drawOnline(p){
   const PX=isPrint?10:parseInt(scaleEl.value)||4;
   const gap=isPrint?15:40;
   const mg=isPrint?20:60;
+  const seamExtra=seam>0?(isPrint?8:24):0;
 
   const boxes=p.pieces.map(pc=>{
     const sp=seam*PX;
