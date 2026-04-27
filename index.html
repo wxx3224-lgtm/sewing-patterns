@@ -397,7 +397,8 @@ function draw(){
   const footerH=isPrint?8:30;
   const testSquareH=isPrint?65:0; // space for 5cm test square
   const rowGap=isPrint?mg+8:mg+20;
-  const totalH=titleH+10+rows.reduce((s,r)=>s+r.h+rowGap,0)+footerH+testSquareH;
+  const legendH=isPrint?25:70;
+  const totalH=titleH+10+rows.reduce((s,r)=>s+r.h+rowGap,0)+legendH+footerH+testSquareH;
   const totalW=Math.max(isPrint?194:600,...rows.map(r=>r.w+mg*2));
 
   if(isPrint){
@@ -430,19 +431,26 @@ function draw(){
       const seamNames={side:'侧缝',armhole:'袖窿',hem:'折边',waist:'腰头',curve:'弧形',topstitch:'明线',overlock:'包缝',fold:'对折',strap:'带子'};
 
       if(seam>0){
-        // 缝份轮廓：沿裁片形状等距外扩
-        // stroke画在路径中心线上，宽度=缝份×2，外半部分就是缝份区域
-        // 用白色填充覆盖内半部分，只留外半部分虚线可见
-        const sw=seam*PX_PER_CM*2;
+        // 专业纸样画法：
+        // 外轮廓（裁剪线）= 粗实线，沿净样外扩seam距离
+        // 内轮廓（缝合线）= 细虚线，即净样本身
+        // 用 stroke-width=seam*2 的实线画外轮廓，再用白色填充盖住内部
+        const sw=seam*2; // in cm (path坐标单位)
         s+=`<g transform="translate(${ox},${oy}) scale(${PX_PER_CM})">`;
-        s+=`<path d="${p.path}" fill="none" stroke="#d4a0a0" stroke-width="${sw/PX_PER_CM}" stroke-dasharray="${(isPrint?2:5)/PX_PER_CM},${(isPrint?1:3)/PX_PER_CM}" stroke-linejoin="round" stroke-linecap="round"/>`;
-        s+=`<path d="${p.path}" fill="${isPrint?'#fff':'#fff8f8'}" stroke="none"/>`;
+        // 裁剪线：粗实线外轮廓
+        s+=`<path d="${p.path}" fill="none" stroke="#5a3e3e" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>`;
+        // 白色填充盖住内半部分stroke
+        s+=`<path d="${p.path}" fill="${isPrint?'#fff':'#fffbfb'}" stroke="none"/>`;
         s+=`</g>`;
       }
 
-      // 净尺寸裁片轮廓
+      // 缝合线（净样轮廓）：细虚线
       s+=`<g transform="translate(${ox},${oy}) scale(${PX_PER_CM})">`;
-      s+=`<path d="${p.path}" fill="${isPrint?'none':'#fff8f8'}" stroke="#5a3e3e" stroke-width="${(isPrint?.08:1.2)/PX_PER_CM}" stroke-linejoin="round"/>`;
+      if(seam>0){
+        s+=`<path d="${p.path}" fill="none" stroke="#5a3e3e" stroke-width="${(isPrint?.04:.6)/PX_PER_CM}" stroke-dasharray="${(isPrint?1.5:4)/PX_PER_CM},${(isPrint?1:2.5)/PX_PER_CM}" stroke-linejoin="round"/>`;
+      } else {
+        s+=`<path d="${p.path}" fill="${isPrint?'none':'#fffbfb'}" stroke="#5a3e3e" stroke-width="${(isPrint?.08:1.2)/PX_PER_CM}" stroke-linejoin="round"/>`;
+      }
       s+=`</g>`;
 
       // grain arrow
@@ -513,6 +521,25 @@ function draw(){
     s+=`<text x="${sqX+sq/2}" y="${sqY+sq+4}" text-anchor="middle" font-size="2" fill="#999">打印后请用尺量此方格，确认为5cm×5cm</text>`;
     s+=`<text x="${sqX+sq/2}" y="${sqY+sq+7}" text-anchor="middle" font-size="2" fill="#999">打印设置：缩放100%，无边距或最小边距</text>`;
   }
+
+  // 图例 legend
+  const lgX=isPrint?mg:mg;
+  const lgY=cy+(isPrint?2:10);
+  const lgFs=isPrint?2.5:10;
+  const lgGap=isPrint?5:18;
+  const lgLw=isPrint?.3:.8;
+  const lgLen=isPrint?10:30;
+  // 裁剪线
+  s+=`<line x1="${lgX}" y1="${lgY}" x2="${lgX+lgLen}" y2="${lgY}" stroke="#5a3e3e" stroke-width="${lgLw*2}"/>`;
+  s+=`<text x="${lgX+lgLen+4}" y="${lgY}" font-size="${lgFs}" fill="#5a3e3e" dominant-baseline="middle">—— 裁剪线（沿此线剪）</text>`;
+  // 缝合线
+  s+=`<line x1="${lgX}" y1="${lgY+lgGap}" x2="${lgX+lgLen}" y2="${lgY+lgGap}" stroke="#5a3e3e" stroke-width="${lgLw}" stroke-dasharray="${isPrint?'1.5,1':'4,2.5'}"/>`;
+  s+=`<text x="${lgX+lgLen+4}" y="${lgY+lgGap}" font-size="${lgFs}" fill="#5a3e3e" dominant-baseline="middle">- - - 缝合线（沿此线缝）</text>`;
+  // 纱向
+  s+=`<line x1="${lgX}" y1="${lgY+lgGap*2}" x2="${lgX+lgLen}" y2="${lgY+lgGap*2}" stroke="#ccc" stroke-width="${lgLw}"/>`;
+  const arSz=isPrint?1.5:4;
+  s+=`<polygon points="${lgX},${lgY+lgGap*2} ${lgX+arSz},${lgY+lgGap*2-arSz*.6} ${lgX+arSz},${lgY+lgGap*2+arSz*.6}" fill="#ccc"/>`;
+  s+=`<text x="${lgX+lgLen+4}" y="${lgY+lgGap*2}" font-size="${lgFs}" fill="#999" dominant-baseline="middle">↕ 纱向（布纹方向）</text>`;
 
   // footer
   const ffs=isPrint?2.5:10;
@@ -590,7 +617,8 @@ function drawOnline(p){
   const footerH=isPrint?8:30;
   const testH=isPrint?65:0;
   const rowGap=isPrint?mg+8:mg+20;
-  const totalH=titleH+10+rows.reduce((s,r)=>s+r.h+rowGap,0)+footerH+testH;
+  const legendH=isPrint?25:70;
+  const totalH=titleH+10+rows.reduce((s,r)=>s+r.h+rowGap,0)+legendH+footerH+testH;
   const totalW=Math.max(isPrint?194:600,...rows.map(r=>r.w+mg*2));
 
   if(isPrint){svgEl.setAttribute('width',totalW+'mm');svgEl.setAttribute('height',totalH+'mm');}
@@ -610,11 +638,11 @@ function drawOnline(p){
       const seam=getSeam(pc.st||'side');
       const ox=cx+sp,oy=cy+sp;
       if(seam>0){
-        const sw=seam*PX*2;
-        s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="none" stroke="#d4a0a0" stroke-width="${sw/PX}" stroke-dasharray="${(isPrint?2:5)/PX},${(isPrint?1:3)/PX}" stroke-linejoin="round" stroke-linecap="round"/></g>`;
-        s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="${isPrint?'#fff':'#fff8f8'}" stroke="none"/></g>`;
+        const sw=seam*2;
+        s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="none" stroke="#5a3e3e" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/></g>`;
+        s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="${isPrint?'#fff':'#fffbfb'}" stroke="none"/></g>`;
       }
-      s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="${isPrint?'none':'#fff8f8'}" stroke="#5a3e3e" stroke-width="${(isPrint?.08:1.2)/PX}" stroke-linejoin="round"/></g>`;
+      s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="${seam>0?'none':(isPrint?'none':'#fffbfb')}" stroke="#5a3e3e" stroke-width="${seam>0?(isPrint?.04:.6)/PX:(isPrint?.08:1.2)/PX}" ${seam>0?`stroke-dasharray="${(isPrint?1.5:4)/PX},${(isPrint?1:2.5)/PX}"`:''}  stroke-linejoin="round"/></g>`;
 
       // grain arrow
       const ax=ox+pc.w*PX/2,ay1=oy+pc.h*PX*.25,ay2=oy+pc.h*PX*.65;
