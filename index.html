@@ -431,25 +431,23 @@ function draw(){
       const seamNames={side:'侧缝',armhole:'袖窿',hem:'折边',waist:'腰头',curve:'弧形',topstitch:'明线',overlock:'包缝',fold:'对折',strap:'带子'};
 
       if(seam>0){
-        // 专业纸样画法：
-        // 外轮廓（裁剪线）= 粗实线，沿净样外扩seam距离
-        // 内轮廓（缝合线）= 细虚线，即净样本身
-        // 用 stroke-width=seam*2 的实线画外轮廓，再用白色填充盖住内部
-        const sw=seam*2; // in cm (path坐标单位)
+        // 裁剪线：细实线，沿净样外扩seam距离
+        const sw=seam*2;
+        const cutW=isPrint?0.06:0.15; // 非常细的裁剪线
         s+=`<g transform="translate(${ox},${oy}) scale(${PX_PER_CM})">`;
-        // 裁剪线：粗实线外轮廓
-        s+=`<path d="${p.path}" fill="none" stroke="#5a3e3e" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>`;
-        // 白色填充盖住内半部分stroke
+        s+=`<path d="${p.path}" fill="none" stroke="#333" stroke-width="${sw+cutW}" stroke-linejoin="round" stroke-linecap="round"/>`;
+        s+=`<path d="${p.path}" fill="none" stroke="${isPrint?'#fff':'#fffbfb'}" stroke-width="${sw-cutW}" stroke-linejoin="round" stroke-linecap="round"/>`;
         s+=`<path d="${p.path}" fill="${isPrint?'#fff':'#fffbfb'}" stroke="none"/>`;
         s+=`</g>`;
       }
 
-      // 缝合线（净样轮廓）：细虚线
+      // 缝合线：更细的虚线
+      const stW=isPrint?0.04:0.1;
       s+=`<g transform="translate(${ox},${oy}) scale(${PX_PER_CM})">`;
       if(seam>0){
-        s+=`<path d="${p.path}" fill="none" stroke="#5a3e3e" stroke-width="${(isPrint?.04:.6)/PX_PER_CM}" stroke-dasharray="${(isPrint?1.5:4)/PX_PER_CM},${(isPrint?1:2.5)/PX_PER_CM}" stroke-linejoin="round"/>`;
+        s+=`<path d="${p.path}" fill="none" stroke="#555" stroke-width="${stW}" stroke-dasharray="0.6,0.4" stroke-linejoin="round"/>`;
       } else {
-        s+=`<path d="${p.path}" fill="${isPrint?'none':'#fffbfb'}" stroke="#5a3e3e" stroke-width="${(isPrint?.08:1.2)/PX_PER_CM}" stroke-linejoin="round"/>`;
+        s+=`<path d="${p.path}" fill="${isPrint?'none':'#fffbfb'}" stroke="#333" stroke-width="${stW*1.5}" stroke-linejoin="round"/>`;
       }
       s+=`</g>`;
 
@@ -459,9 +457,10 @@ function draw(){
       const ay2=oy+p.nh*PX_PER_CM*.65;
       const minArrow=isPrint?10:30;
       if(p.nh*PX_PER_CM>minArrow){
-        s+=`<line x1="${ax}" y1="${ay1}" x2="${ax}" y2="${ay2}" stroke="#ccc" stroke-width="${isPrint?.15:.8}"/>`;
-        const as=isPrint?1.5:5;
-        s+=`<polygon points="${ax},${ay1-as} ${ax-as*.6},${ay1+as*.4} ${ax+as*.6},${ay1+as*.4}" fill="#ccc"/>`;
+        s+=`<line x1="${ax}" y1="${ay1}" x2="${ax}" y2="${ay2}" stroke="#bbb" stroke-width="${isPrint?.08:.5}"/>`;
+        const as=isPrint?1.2:4;
+        s+=`<polygon points="${ax},${ay1-as} ${ax-as*.5},${ay1+as*.3} ${ax+as*.5},${ay1+as*.3}" fill="#bbb"/>`;
+        s+=`<polygon points="${ax},${ay2+as} ${ax-as*.5},${ay2-as*.3} ${ax+as*.5},${ay2-as*.3}" fill="#bbb"/>`;
       }
 
       // label
@@ -474,18 +473,18 @@ function draw(){
       const seamLabel=seam>0?`${seamNames[p.st]||''}缝份 ${seam}cm`:'无缝份';
       s+=`<text x="${ox+p.nw*PX_PER_CM/2}" y="${oy+p.nh*PX_PER_CM/2+lfs*1.5}" text-anchor="middle" font-size="${isPrint?1.8:8}" fill="#d4889a" dominant-baseline="middle">${seamLabel}</text>`;
 
-      // dimensions
-      const dimC='#777',dfs=isPrint?2.2:9,doff=isPrint?3:12,dtoff=isPrint?5:18,dsw=isPrint?.1:.6;
+      // dimensions — 参考图样式：粉色标注文字，细标注线
+      const dimC='#999',dimT='#c06',dfs=isPrint?2:9,doff=isPrint?3:12,dtoff=isPrint?5:18,dsw=isPrint?.06:.4;
       // width on top
       s+=`<line x1="${ox}" y1="${oy-doff}" x2="${ox+p.nw*PX_PER_CM}" y2="${oy-doff}" stroke="${dimC}" stroke-width="${dsw}"/>`;
       s+=`<line x1="${ox}" y1="${oy-doff-1.5}" x2="${ox}" y2="${oy-doff+1.5}" stroke="${dimC}" stroke-width="${dsw}"/>`;
       s+=`<line x1="${ox+p.nw*PX_PER_CM}" y1="${oy-doff-1.5}" x2="${ox+p.nw*PX_PER_CM}" y2="${oy-doff+1.5}" stroke="${dimC}" stroke-width="${dsw}"/>`;
-      s+=`<text x="${ox+p.nw*PX_PER_CM/2}" y="${oy-dtoff}" text-anchor="middle" font-size="${dfs}" fill="${dimC}">${p.nw}cm</text>`;
+      s+=`<text x="${ox+p.nw*PX_PER_CM/2}" y="${oy-dtoff}" text-anchor="middle" font-size="${dfs}" fill="${dimT}">${p.nw}cm</text>`;
       // height on left
       s+=`<line x1="${ox-doff}" y1="${oy}" x2="${ox-doff}" y2="${oy+p.nh*PX_PER_CM}" stroke="${dimC}" stroke-width="${dsw}"/>`;
       s+=`<line x1="${ox-doff-1.5}" y1="${oy}" x2="${ox-doff+1.5}" y2="${oy}" stroke="${dimC}" stroke-width="${dsw}"/>`;
       s+=`<line x1="${ox-doff-1.5}" y1="${oy+p.nh*PX_PER_CM}" x2="${ox-doff+1.5}" y2="${oy+p.nh*PX_PER_CM}" stroke="${dimC}" stroke-width="${dsw}"/>`;
-      s+=`<text x="${ox-dtoff}" y="${oy+p.nh*PX_PER_CM/2}" text-anchor="middle" font-size="${dfs}" fill="${dimC}" dominant-baseline="middle" transform="rotate(-90,${ox-dtoff},${oy+p.nh*PX_PER_CM/2})">${p.nh}cm</text>`;
+      s+=`<text x="${ox-dtoff}" y="${oy+p.nh*PX_PER_CM/2}" text-anchor="middle" font-size="${dfs}" fill="${dimT}" dominant-baseline="middle" transform="rotate(-90,${ox-dtoff},${oy+p.nh*PX_PER_CM/2})">${p.nh}cm</text>`;
 
       if(seam>0){
         const sfs=isPrint?2:8;
@@ -639,10 +638,13 @@ function drawOnline(p){
       const ox=cx+sp,oy=cy+sp;
       if(seam>0){
         const sw=seam*2;
-        s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="none" stroke="#5a3e3e" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/></g>`;
+        const cutW=isPrint?0.06:0.15;
+        s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="none" stroke="#333" stroke-width="${sw+cutW}" stroke-linejoin="round" stroke-linecap="round"/></g>`;
+        s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="none" stroke="${isPrint?'#fff':'#fffbfb'}" stroke-width="${sw-cutW}" stroke-linejoin="round" stroke-linecap="round"/></g>`;
         s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="${isPrint?'#fff':'#fffbfb'}" stroke="none"/></g>`;
       }
-      s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="${seam>0?'none':(isPrint?'none':'#fffbfb')}" stroke="#5a3e3e" stroke-width="${seam>0?(isPrint?.04:.6)/PX:(isPrint?.08:1.2)/PX}" ${seam>0?`stroke-dasharray="${(isPrint?1.5:4)/PX},${(isPrint?1:2.5)/PX}"`:''}  stroke-linejoin="round"/></g>`;
+      const stW=isPrint?0.04:0.1;
+      s+=`<g transform="translate(${ox},${oy}) scale(${PX})"><path d="${rectPath(pc.w,pc.h)}" fill="${seam>0?'none':(isPrint?'none':'#fffbfb')}" stroke="${seam>0?'#555':'#333'}" stroke-width="${stW*(seam>0?1:1.5)}" ${seam>0?'stroke-dasharray="0.6,0.4"':''}  stroke-linejoin="round"/></g>`;
 
       // grain arrow
       const ax=ox+pc.w*PX/2,ay1=oy+pc.h*PX*.25,ay2=oy+pc.h*PX*.65;
