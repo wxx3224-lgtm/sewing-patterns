@@ -322,7 +322,9 @@ const SEAM_TABLE={
 
 function getSeam(seamType){
   const fabric=fabricEl.value;
-  return SEAM_TABLE[seamType]?.[fabric] ?? SEAM_TABLE.side[fabric];
+  var t=SEAM_TABLE[seamType];
+  if(t && t[fabric] !== undefined) return t[fabric];
+  return SEAM_TABLE.side[fabric] || 1.0;
 }
 
 function updateSeamInfo(){
@@ -457,7 +459,7 @@ function draw(){
       const ay2=oy+p.nh*PX_PER_CM*.65;
       const minArrow=isPrint?10:30;
       if(p.nh*PX_PER_CM>minArrow){
-        s+=`<line x1="${ax}" y1="${ay1}" x2="${ax}" y2="${ay2}" stroke="#bbb" stroke-width="${isPrint?.08:.5}"/>`;
+        s+=`<line x1="${ax}" y1="${ay1}" x2="${ax}" y2="${ay2}" stroke="#bbb" stroke-width="${isPrint?0.08:.5}"/>`;
         const as=isPrint?1.2:4;
         s+=`<polygon points="${ax},${ay1-as} ${ax-as*.5},${ay1+as*.3} ${ax+as*.5},${ay1+as*.3}" fill="#bbb"/>`;
         s+=`<polygon points="${ax},${ay2+as} ${ax-as*.5},${ay2-as*.3} ${ax+as*.5},${ay2-as*.3}" fill="#bbb"/>`;
@@ -537,7 +539,7 @@ function draw(){
   const lgY=cy+(isPrint?2:10);
   const lgFs=isPrint?2.5:10;
   const lgGap=isPrint?5:18;
-  const lgLw=isPrint?.3:.8;
+  const lgLw=isPrint?0.3:.8;
   const lgLen=isPrint?10:30;
   // 裁剪线
   s+=`<line x1="${lgX}" y1="${lgY}" x2="${lgX+lgLen}" y2="${lgY}" stroke="#5a3e3e" stroke-width="${lgLw*2}"/>`;
@@ -660,7 +662,7 @@ function drawOnline(p){
       // grain arrow
       const ax=ox+pc.w*PX/2,ay1=oy+pc.h*PX*.25,ay2=oy+pc.h*PX*.65;
       if(pc.h*PX>(isPrint?10:30)){
-        s+=`<line x1="${ax}" y1="${ay1}" x2="${ax}" y2="${ay2}" stroke="#ccc" stroke-width="${isPrint?.15:.8}"/>`;
+        s+=`<line x1="${ax}" y1="${ay1}" x2="${ax}" y2="${ay2}" stroke="#ccc" stroke-width="${isPrint?0.15:.8}"/>`;
         const as=isPrint?1.5:5;
         s+=`<polygon points="${ax},${ay1-as} ${ax-as*.6},${ay1+as*.4} ${ax+as*.6},${ay1+as*.4}" fill="#ccc"/>`;
       }
@@ -672,7 +674,7 @@ function drawOnline(p){
       s+=`<text x="${ox+pc.w*PX/2}" y="${oy+pc.h*PX/2+lfs*.6}" text-anchor="middle" font-size="${nfs}" fill="#b5838d" dominant-baseline="middle">${pc.w}×${pc.h}cm</text>`;
 
       // dimensions
-      const dimC='#777',dfs=isPrint?2.2:9,doff=isPrint?3:12,dtoff=isPrint?5:18,dsw=isPrint?.1:.6;
+      const dimC='#777',dfs=isPrint?2.2:9,doff=isPrint?3:12,dtoff=isPrint?5:18,dsw=isPrint?0.1:.6;
       s+=`<line x1="${ox}" y1="${oy-doff}" x2="${ox+pc.w*PX}" y2="${oy-doff}" stroke="${dimC}" stroke-width="${dsw}"/>`;
       s+=`<line x1="${ox}" y1="${oy-doff-1.5}" x2="${ox}" y2="${oy-doff+1.5}" stroke="${dimC}" stroke-width="${dsw}"/>`;
       s+=`<line x1="${ox+pc.w*PX}" y1="${oy-doff-1.5}" x2="${ox+pc.w*PX}" y2="${oy-doff+1.5}" stroke="${dimC}" stroke-width="${dsw}"/>`;
