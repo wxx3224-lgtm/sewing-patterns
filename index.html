@@ -883,7 +883,6 @@ function parseText(){
 
 // === Print function ===
 function doPrint(){
-  // 先尝试系统打印，不行就自动转为保存图片
   printEl.checked=true;
   draw();
   var printed=false;
@@ -892,23 +891,20 @@ function doPrint(){
   }
   printEl.checked=false;
   draw();
-  if(!printed){
-    exportImage();
-  }
+  if(!printed) exportImage();
 }
 
-// === Export as PNG image (mobile friendly) ===
+// === Export as PNG image (all devices) ===
 function exportImage(){
   printEl.checked=true;
   draw();
 
-  // 获取SVG的viewBox尺寸（不带mm单位）
   var vb=svgEl.getAttribute('viewBox');
   var parts=vb?vb.split(' '):[0,0,800,600];
   var vbW=parseFloat(parts[2])||800;
   var vbH=parseFloat(parts[3])||600;
-
   var scale=3;
+
   var canvas=document.createElement('canvas');
   canvas.width=Math.round(vbW*scale);
   canvas.height=Math.round(vbH*scale);
@@ -916,73 +912,83 @@ function exportImage(){
   ctx.fillStyle='#fff';
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  // 克隆SVG并设置固定像素尺寸（避免mm单位问题）
   var clone=svgEl.cloneNode(true);
   clone.setAttribute('width',vbW);
   clone.setAttribute('height',vbH);
-  var svgData=new XMLSerializer().serializeToString(clone);
-  var blob=new Blob([svgData],{type:'image/svg+xml;charset=utf-8'});
-  var url=URL.createObjectURL(blob);
+  clone.removeAttribute('style');
+  var svgStr='<?xml version="1.0" encoding="UTF-8"?>'+new XMLSerializer().serializeToString(clone);
+  var svgB64='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svgStr)));
 
   var img=new Image();
+  img.crossOrigin='anonymous';
   img.onload=function(){
     ctx.drawImage(img,0,0,canvas.width,canvas.height);
-    URL.revokeObjectURL(url);
-    canvas.toBlob(function(pngBlob){
-      if(!pngBlob){fallbackSVG();return;}
-      // 尝试 Web Share API（手机原生分享）
-      if(navigator.share){
-        try{
-          var file=new File([pngBlob],'裁片图纸.png',{type:'image/png'});
-          if(navigator.canShare && navigator.canShare({files:[file]})){
-            navigator.share({files:[file],title:'裁片图纸'}).then(function(){
-              printEl.checked=false;draw();
-            }).catch(function(){
-              downloadBlob(pngBlob,'裁片图纸.png');
-              printEl.checked=false;draw();
-            });
-            return;
-          }
-        }catch(e){}
-      }
-      downloadBlob(pngBlob,'裁片图纸.png');
-      printEl.checked=false;draw();
-    },'image/png');
+    var dataUrl=canvas.toDataURL('image/png');
+    showImagePreview(dataUrl);
+    printEl.checked=false;draw();
   };
   img.onerror=function(){
-    URL.revokeObjectURL(url);
-    fallbackSVG();
+    // fallback: 直接打开SVG
+    showImagePreview(svgB64);
+    printEl.checked=false;draw();
   };
-  img.src=url;
+  img.src=svgB64;
 }
 
-function fallbackSVG(){
-  var svgData=new XMLSerializer().serializeToString(svgEl);
-  var blob=new Blob([svgData],{type:'image/svg+xml'});
-  downloadBlob(blob,'裁片图纸.svg');
-  printEl.checked=false;draw();
-}
+function showImagePreview(dataUrl){
+  // 创建全屏预览层，用户可以长按保存
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px';
 
-function downloadBlob(blob,filename){
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;
-  a.download=filename;
-  a.style.display='none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function(){URL.revokeObjectURL(url);},2000);
-  showToast('图片已保存，可从相册/文件中打印');
+  var tip=document.createElement('div');
+  tip.style.cssText='color:#fff;font-size:14px;margin-bottom:12px;text-align:center;line-height:1.6';
+  tip.innerHTML='长按图片可保存到相册<br><span style="font-size:12px;color:#aaa">保存后可从相册中打印或分享</span>';
+
+  var imgEl=document.createElement('img');
+  imgEl.src=dataUrl;
+  imgEl.style.cssText='max-width:92%;max-height:70vh;border-radius:8px;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.4)';
+
+  var btnRow=document.createElement('div');
+  btnRow.style.cssText='display:flex;gap:12px;margin-top:16px';
+
+  var dlBtn=document.createElement('button');
+  dlBtn.textContent='📥 下载图片';
+  dlBtn.style.cssText='background:#d4889a;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer';
+  dlBtn.onclick=function(){
+    // 尝试 <a download>
+    var a=document.createElement('a');
+    a.href=dataUrl;
+    a.download='裁片图纸.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('正在下载...');
+  };
+
+  var closeBtn=document.createElement('button');
+  closeBtn.textContent='✕ 关闭';
+  closeBtn.style.cssText='background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;cursor:pointer';
+  closeBtn.onclick=function(){document.body.removeChild(overlay);};
+
+  btnRow.appendChild(dlBtn);
+  btnRow.appendChild(closeBtn);
+  overlay.appendChild(tip);
+  overlay.appendChild(imgEl);
+  overlay.appendChild(btnRow);
+
+  // 点击背景也关闭
+  overlay.onclick=function(e){if(e.target===overlay)document.body.removeChild(overlay);};
+
+  document.body.appendChild(overlay);
 }
 
 function showToast(msg){
   var t=document.createElement('div');
   t.textContent=msg;
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:9999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:99999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.2)';
   document.body.appendChild(t);
   setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .5s';},2000);
-  setTimeout(function(){document.body.removeChild(t);},2600);
+  setTimeout(function(){if(t.parentNode)document.body.removeChild(t);},2600);
 }
 
 // === Mobile responsive ===
