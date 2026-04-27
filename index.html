@@ -88,10 +88,10 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
 <body>
 <div class="wrap">
   <div class="mobile-bar no-print">
-    <h1>🧵 裁片图纸工具</h1>
+    <h1>🧵 裁片图纸</h1>
     <div style="display:flex;gap:6px">
-      <button class="mobile-toggle" onclick="exportImage()" style="font-size:12px;padding:6px 10px">📥 保存图片</button>
-      <button class="mobile-toggle" onclick="togglePanel()">展开面板</button>
+      <button class="mobile-toggle" onclick="exportImage()" style="font-size:12px;padding:6px 12px">📥 保存/打印</button>
+      <button class="mobile-toggle" onclick="togglePanel()">☰ 面板</button>
     </div>
   </div>
   <aside class="no-print collapsed" id="sidePanel">
@@ -883,70 +883,106 @@ function parseText(){
 
 // === Print function ===
 function doPrint(){
+  // 先尝试系统打印，不行就自动转为保存图片
   printEl.checked=true;
   draw();
+  var printed=false;
   if(typeof window.print==='function'){
-    try{ window.print(); }catch(e){}
+    try{ window.print(); printed=true; }catch(e){}
   }
   printEl.checked=false;
   draw();
+  if(!printed){
+    exportImage();
+  }
 }
 
 // === Export as PNG image (mobile friendly) ===
 function exportImage(){
   printEl.checked=true;
   draw();
-  const svgData=new XMLSerializer().serializeToString(svgEl);
-  const svgW=parseFloat(svgEl.getAttribute('width'))||800;
-  const svgH=parseFloat(svgEl.getAttribute('height'))||600;
-  // 高分辨率：3倍像素密度，打印清晰
-  const scale=3;
-  const canvas=document.createElement('canvas');
-  canvas.width=svgW*scale;
-  canvas.height=svgH*scale;
-  const ctx=canvas.getContext('2d');
+
+  // 获取SVG的viewBox尺寸（不带mm单位）
+  var vb=svgEl.getAttribute('viewBox');
+  var parts=vb?vb.split(' '):[0,0,800,600];
+  var vbW=parseFloat(parts[2])||800;
+  var vbH=parseFloat(parts[3])||600;
+
+  var scale=3;
+  var canvas=document.createElement('canvas');
+  canvas.width=Math.round(vbW*scale);
+  canvas.height=Math.round(vbH*scale);
+  var ctx=canvas.getContext('2d');
   ctx.fillStyle='#fff';
   ctx.fillRect(0,0,canvas.width,canvas.height);
-  const img=new Image();
-  const blob=new Blob([svgData],{type:'image/svg+xml;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
+
+  // 克隆SVG并设置固定像素尺寸（避免mm单位问题）
+  var clone=svgEl.cloneNode(true);
+  clone.setAttribute('width',vbW);
+  clone.setAttribute('height',vbH);
+  var svgData=new XMLSerializer().serializeToString(clone);
+  var blob=new Blob([svgData],{type:'image/svg+xml;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+
+  var img=new Image();
   img.onload=function(){
     ctx.drawImage(img,0,0,canvas.width,canvas.height);
     URL.revokeObjectURL(url);
     canvas.toBlob(function(pngBlob){
-      // 尝试用 Web Share API（手机原生分享）
-      if(navigator.share && navigator.canShare){
-        const file=new File([pngBlob],'裁片图纸.png',{type:'image/png'});
-        if(navigator.canShare({files:[file]})){
-          navigator.share({files:[file],title:'裁片图纸'}).catch(()=>fallbackDownload(pngBlob));
-          printEl.checked=false;draw();
-          return;
-        }
+      if(!pngBlob){fallbackSVG();return;}
+      // 尝试 Web Share API（手机原生分享）
+      if(navigator.share){
+        try{
+          var file=new File([pngBlob],'裁片图纸.png',{type:'image/png'});
+          if(navigator.canShare && navigator.canShare({files:[file]})){
+            navigator.share({files:[file],title:'裁片图纸'}).then(function(){
+              printEl.checked=false;draw();
+            }).catch(function(){
+              downloadBlob(pngBlob,'裁片图纸.png');
+              printEl.checked=false;draw();
+            });
+            return;
+          }
+        }catch(e){}
       }
-      fallbackDownload(pngBlob);
+      downloadBlob(pngBlob,'裁片图纸.png');
       printEl.checked=false;draw();
     },'image/png');
   };
   img.onerror=function(){
     URL.revokeObjectURL(url);
-    // fallback: download SVG
-    const svgBlob=new Blob([svgData],{type:'image/svg+xml'});
-    fallbackDownload(svgBlob,'裁片图纸.svg');
-    printEl.checked=false;draw();
+    fallbackSVG();
   };
   img.src=url;
 }
 
-function fallbackDownload(blob,filename){
-  filename=filename||'裁片图纸.png';
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
+function fallbackSVG(){
+  var svgData=new XMLSerializer().serializeToString(svgEl);
+  var blob=new Blob([svgData],{type:'image/svg+xml'});
+  downloadBlob(blob,'裁片图纸.svg');
+  printEl.checked=false;draw();
+}
+
+function downloadBlob(blob,filename){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
   a.href=url;
   a.download=filename;
+  a.style.display='none';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  setTimeout(function(){URL.revokeObjectURL(url);},2000);
+  showToast('图片已保存，可从相册/文件中打印');
+}
+
+function showToast(msg){
+  var t=document.createElement('div');
+  t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:9999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .5s';},2000);
+  setTimeout(function(){document.body.removeChild(t);},2600);
 }
 
 // === Mobile responsive ===
