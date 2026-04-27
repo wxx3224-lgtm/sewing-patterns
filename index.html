@@ -90,7 +90,7 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
   <div class="mobile-bar no-print">
     <h1>🧵 裁片图纸工具</h1>
     <div style="display:flex;gap:6px">
-      <button class="mobile-toggle" onclick="doPrint()" style="font-size:12px;padding:6px 10px">🖨️</button>
+      <button class="mobile-toggle" onclick="exportImage()" style="font-size:12px;padding:6px 10px">📥 保存图片</button>
       <button class="mobile-toggle" onclick="togglePanel()">展开面板</button>
     </div>
   </div>
@@ -145,7 +145,7 @@ main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:2
     <div class="btn-row">
       <button class="btn btn-reset" onclick="fabricEl.value='woven';updateSeamInfo();draw()">重置面料</button>
       <button class="btn btn-print" onclick="doPrint()">🖨️ 打印</button>
-      <button class="btn" style="background:#f5e6e9;color:#9d4c5a;flex:.6" onclick="exportImage()">📥 导出</button>
+      <button class="btn" style="background:#f5e6e9;color:#9d4c5a;flex:.8" onclick="exportImage()">📥 保存图片</button>
     </div>
   </aside>
   <main><div id="canvas-wrap"><svg id="svgCanvas" xmlns="http://www.w3.org/2000/svg"></svg></div></main>
@@ -879,28 +879,72 @@ function parseText(){
   collapseOnMobile();
 }
 
-// === Print function (iOS/iPadOS compatible) ===
+// === Print function ===
 function doPrint(){
-  // enable print mode and redraw synchronously
   printEl.checked=true;
   draw();
-  // window.print() must be called synchronously in user gesture for iOS Safari
-  window.print();
-  // after print dialog closes, optionally restore preview mode
+  if(typeof window.print==='function'){
+    try{ window.print(); }catch(e){}
+  }
   printEl.checked=false;
   draw();
 }
 
-// === Export SVG as image (fallback for devices without print) ===
+// === Export as PNG image (mobile friendly) ===
 function exportImage(){
-  const svgData=svgEl.outerHTML;
-  const blob=new Blob([svgData],{type:'image/svg+xml'});
+  printEl.checked=true;
+  draw();
+  const svgData=new XMLSerializer().serializeToString(svgEl);
+  const svgW=parseFloat(svgEl.getAttribute('width'))||800;
+  const svgH=parseFloat(svgEl.getAttribute('height'))||600;
+  // 高分辨率：3倍像素密度，打印清晰
+  const scale=3;
+  const canvas=document.createElement('canvas');
+  canvas.width=svgW*scale;
+  canvas.height=svgH*scale;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  const img=new Image();
+  const blob=new Blob([svgData],{type:'image/svg+xml;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  img.onload=function(){
+    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+    URL.revokeObjectURL(url);
+    canvas.toBlob(function(pngBlob){
+      // 尝试用 Web Share API（手机原生分享）
+      if(navigator.share && navigator.canShare){
+        const file=new File([pngBlob],'裁片图纸.png',{type:'image/png'});
+        if(navigator.canShare({files:[file]})){
+          navigator.share({files:[file],title:'裁片图纸'}).catch(()=>fallbackDownload(pngBlob));
+          printEl.checked=false;draw();
+          return;
+        }
+      }
+      fallbackDownload(pngBlob);
+      printEl.checked=false;draw();
+    },'image/png');
+  };
+  img.onerror=function(){
+    URL.revokeObjectURL(url);
+    // fallback: download SVG
+    const svgBlob=new Blob([svgData],{type:'image/svg+xml'});
+    fallbackDownload(svgBlob,'裁片图纸.svg');
+    printEl.checked=false;draw();
+  };
+  img.src=url;
+}
+
+function fallbackDownload(blob,filename){
+  filename=filename||'裁片图纸.png';
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;
-  a.download='裁片图纸.svg';
+  a.download=filename;
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
 // === Mobile responsive ===
