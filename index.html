@@ -894,7 +894,7 @@ function doPrint(){
   if(!printed) exportImage();
 }
 
-// === Export as A4 paged PNG images (all devices) ===
+// === Export as A4 tiled pages with alignment marks ===
 function exportImage(){
   printEl.checked=true;
   draw();
@@ -904,16 +904,15 @@ function exportImage(){
   var vbW=parseFloat(parts[2])||800;
   var vbH=parseFloat(parts[3])||600;
 
-  // A4 比例: 210×297mm, 按viewBox宽度计算每页高度
-  var pageW=vbW;
-  var pageH=pageW*(297/210);
-  var totalPages=Math.ceil(vbH/pageH);
-  if(totalPages<1) totalPages=1;
+  // A4可打印区域190×277mm, 重叠10mm用于拼接对齐
+  var overlap=10;
+  var tileW=190-overlap;
+  var tileH=277-overlap;
+  var cols=Math.max(1,Math.ceil(vbW/tileW));
+  var rows=Math.max(1,Math.ceil(vbH/tileH));
+  var totalPages=cols*rows;
 
   var scale=3;
-  var canvasW=Math.round(pageW*scale);
-  var canvasH=Math.round(pageH*scale);
-
   var clone=svgEl.cloneNode(true);
   clone.setAttribute('width',vbW);
   clone.setAttribute('height',vbH);
@@ -924,106 +923,117 @@ function exportImage(){
   var img=new Image();
   img.crossOrigin='anonymous';
   img.onload=function(){
+    var bigCanvas=document.createElement('canvas');
+    bigCanvas.width=Math.round(vbW*scale);
+    bigCanvas.height=Math.round(vbH*scale);
+    var bigCtx=bigCanvas.getContext('2d');
+    bigCtx.fillStyle='#fff';
+    bigCtx.fillRect(0,0,bigCanvas.width,bigCanvas.height);
+    bigCtx.drawImage(img,0,0,bigCanvas.width,bigCanvas.height);
+
+    var pageW=190*scale, pageH=277*scale;
+    var tileWpx=tileW*scale, tileHpx=tileH*scale;
     var pages=[];
-    for(var i=0;i<totalPages;i++){
-      var canvas=document.createElement('canvas');
-      canvas.width=canvasW;
-      canvas.height=canvasH;
-      var ctx=canvas.getContext('2d');
-      ctx.fillStyle='#fff';
-      ctx.fillRect(0,0,canvasW,canvasH);
-      // 绘制对应页的SVG区域
-      var srcY=i*pageH*scale;
-      var srcH=Math.min(canvasH, Math.round(vbH*scale)-srcY);
-      ctx.drawImage(img, 0, srcY, canvasW, srcH, 0, 0, canvasW, srcH);
-      // 页码
-      ctx.fillStyle='#ccc';
-      ctx.font=(12*scale)+'px sans-serif';
-      ctx.textAlign='center';
-      ctx.fillText('第'+(i+1)+'/'+totalPages+'页', canvasW/2, canvasH-8*scale);
-      pages.push(canvas.toDataURL('image/png'));
+    var colLetters='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    for(var r=0;r<rows;r++){
+      for(var c=0;c<cols;c++){
+        var canvas=document.createElement('canvas');
+        canvas.width=pageW; canvas.height=pageH;
+        var ctx=canvas.getContext('2d');
+        ctx.fillStyle='#fff';
+        ctx.fillRect(0,0,pageW,pageH);
+        var srcX=c*tileWpx, srcY=r*tileHpx;
+        var drawW=Math.min(pageW,bigCanvas.width-srcX);
+        var drawH=Math.min(pageH,bigCanvas.height-srcY);
+        if(drawW>0&&drawH>0) ctx.drawImage(bigCanvas,srcX,srcY,drawW,drawH,0,0,drawW,drawH);
+
+        // 拼接虚线框
+        ctx.strokeStyle='#999';ctx.lineWidth=1*scale;
+        ctx.setLineDash([4*scale,3*scale]);
+        ctx.strokeRect(2*scale,2*scale,pageW-4*scale,pageH-4*scale);
+        ctx.setLineDash([]);
+
+        // 四角对齐标记
+        var mk=8*scale;
+        ctx.strokeStyle='#333';ctx.lineWidth=0.5*scale;
+        ctx.beginPath();ctx.moveTo(0,mk);ctx.lineTo(0,0);ctx.lineTo(mk,0);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(pageW-mk,0);ctx.lineTo(pageW,0);ctx.lineTo(pageW,mk);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(0,pageH-mk);ctx.lineTo(0,pageH);ctx.lineTo(mk,pageH);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(pageW-mk,pageH);ctx.lineTo(pageW,pageH);ctx.lineTo(pageW,pageH-mk);ctx.stroke();
+
+        var pageId=(colLetters[r]||r)+''+(c+1);
+        ctx.fillStyle='#c06';ctx.font='bold '+(5*scale)+'px sans-serif';ctx.textAlign='center';
+        ctx.fillText(pageId,pageW/2,8*scale);
+        ctx.fillStyle='#aaa';ctx.font=(3*scale)+'px sans-serif';
+        ctx.fillText(pageId+' · '+totalPages+'页 · 100%打印 · 虚线对齐粘贴',pageW/2,pageH-4*scale);
+
+        if(r===0&&c===0){
+          var sq=50*scale,sqX=pageW-sq-5*scale,sqY=12*scale;
+          ctx.strokeStyle='#333';ctx.lineWidth=0.5*scale;ctx.strokeRect(sqX,sqY,sq,sq);
+          for(var g=1;g<5;g++){
+            ctx.strokeStyle='#ddd';ctx.lineWidth=0.3*scale;
+            ctx.beginPath();ctx.moveTo(sqX+g*10*scale,sqY);ctx.lineTo(sqX+g*10*scale,sqY+sq);ctx.stroke();
+            ctx.beginPath();ctx.moveTo(sqX,sqY+g*10*scale);ctx.lineTo(sqX+sq,sqY+g*10*scale);ctx.stroke();
+          }
+          ctx.fillStyle='#333';ctx.font=(2.5*scale)+'px sans-serif';
+          ctx.fillText('校验方格 5x5cm',sqX+sq/2,sqY-2*scale);
+        }
+        pages.push(canvas.toDataURL('image/png'));
+      }
     }
-    showPagesPreview(pages);
+    showPagesPreview(pages,cols,rows);
     printEl.checked=false;draw();
   };
-  img.onerror=function(){
-    showToast('图片生成失败，请重试');
-    printEl.checked=false;draw();
-  };
+  img.onerror=function(){showToast('图片生成失败');printEl.checked=false;draw();};
   img.src=svgB64;
 }
 
-function showPagesPreview(pages){
-  var overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.9);z-index:10000;display:flex;flex-direction:column;overflow:hidden';
+function showPagesPreview(pages,cols,rows){
+  var L='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:10000;display:flex;flex-direction:column;overflow:hidden';
+  var top=document.createElement('div');
+  top.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:10px 16px;flex-shrink:0';
+  var tip=document.createElement('div');
+  tip.style.cssText='color:#fff;font-size:12px;line-height:1.5';
+  tip.innerHTML=pages.length+'页('+cols+'列×'+rows+'行) · <b>长按保存</b> · 打印后虚线对齐粘贴';
+  var xBtn=document.createElement('button');
+  xBtn.textContent='✕';xBtn.style.cssText='background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer';
+  xBtn.onclick=function(){document.body.removeChild(ov);};
+  top.appendChild(tip);top.appendChild(xBtn);
 
-  // 顶部栏
-  var topBar=document.createElement('div');
-  topBar.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:12px 16px;flex-shrink:0';
-  var tipText=document.createElement('div');
-  tipText.style.cssText='color:#fff;font-size:13px;line-height:1.5';
-  tipText.innerHTML='共'+pages.length+'页 A4 · <b>长按图片保存到相册</b>';
-  var closeBtn=document.createElement('button');
-  closeBtn.textContent='✕ 关闭';
-  closeBtn.style.cssText='background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer';
-  closeBtn.onclick=function(){document.body.removeChild(overlay);};
-  topBar.appendChild(tipText);
-  topBar.appendChild(closeBtn);
-
-  // 图片滚动区
-  var scroll=document.createElement('div');
-  scroll.style.cssText='flex:1;overflow-y:auto;padding:8px 16px 80px;display:flex;flex-direction:column;gap:12px;align-items:center;-webkit-overflow-scrolling:touch';
-
+  var sc=document.createElement('div');
+  sc.style.cssText='flex:1;overflow-y:auto;padding:8px 12px 80px;-webkit-overflow-scrolling:touch';
+  var grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat('+cols+',1fr);gap:8px;max-width:600px;margin:0 auto';
   for(var i=0;i<pages.length;i++){
-    var wrap=document.createElement('div');
-    wrap.style.cssText='position:relative;width:100%;max-width:500px';
-    var pageImg=document.createElement('img');
-    pageImg.src=pages[i];
-    pageImg.style.cssText='width:100%;border-radius:4px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.3)';
-    var label=document.createElement('div');
-    label.textContent='第'+(i+1)+'页';
-    label.style.cssText='position:absolute;top:8px;left:8px;background:rgba(0,0,0,.5);color:#fff;font-size:11px;padding:2px 8px;border-radius:4px';
-    wrap.appendChild(pageImg);
-    wrap.appendChild(label);
-    scroll.appendChild(wrap);
+    var r=Math.floor(i/cols),c=i%cols;
+    var cell=document.createElement('div');cell.style.cssText='position:relative';
+    var im=document.createElement('img');im.src=pages[i];
+    im.style.cssText='width:100%;border-radius:3px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.3)';
+    var lb=document.createElement('div');lb.textContent=(L[r]||r)+''+(c+1);
+    lb.style.cssText='position:absolute;top:4px;left:4px;background:rgba(204,0,102,.8);color:#fff;font-size:10px;padding:1px 6px;border-radius:3px;font-weight:bold';
+    cell.appendChild(im);cell.appendChild(lb);grid.appendChild(cell);
   }
+  sc.appendChild(grid);
 
-  // 底部操作栏
-  var bottomBar=document.createElement('div');
-  bottomBar.style.cssText='position:absolute;bottom:0;left:0;right:0;display:flex;gap:10px;padding:12px 16px;background:linear-gradient(transparent,rgba(0,0,0,.8) 30%)';
-
-  var dlAllBtn=document.createElement('button');
-  dlAllBtn.textContent='📥 逐页下载';
-  dlAllBtn.style.cssText='flex:1;background:#d4889a;color:#fff;border:none;border-radius:8px;padding:12px 0;font-size:14px;cursor:pointer';
-  dlAllBtn.onclick=function(){
-    for(var j=0;j<pages.length;j++){
-      var a=document.createElement('a');
-      a.href=pages[j];
-      a.download='裁片图纸_第'+(j+1)+'页.png';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-    showToast('正在下载'+pages.length+'张图片...');
-  };
-
-  var closeBtn2=document.createElement('button');
-  closeBtn2.textContent='关闭';
-  closeBtn2.style.cssText='flex:.5;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:12px 0;font-size:14px;cursor:pointer';
-  closeBtn2.onclick=function(){document.body.removeChild(overlay);};
-
-  bottomBar.appendChild(dlAllBtn);
-  bottomBar.appendChild(closeBtn2);
-
-  overlay.appendChild(topBar);
-  overlay.appendChild(scroll);
-  overlay.appendChild(bottomBar);
-  document.body.appendChild(overlay);
+  var bot=document.createElement('div');
+  bot.style.cssText='position:absolute;bottom:0;left:0;right:0;display:flex;gap:10px;padding:12px 16px;background:linear-gradient(transparent,rgba(0,0,0,.85) 30%)';
+  var dl=document.createElement('button');
+  dl.textContent='📥 逐页下载('+pages.length+'页)';
+  dl.style.cssText='flex:1;background:#d4889a;color:#fff;border:none;border-radius:8px;padding:12px 0;font-size:14px;cursor:pointer';
+  dl.onclick=function(){for(var j=0;j<pages.length;j++){var a=document.createElement('a');a.href=pages[j];var r2=Math.floor(j/cols),c2=j%cols;a.download='纸样_'+(L[r2]||r2)+(c2+1)+'.png';document.body.appendChild(a);a.click();document.body.removeChild(a);}showToast('下载'+pages.length+'张...');};
+  var cl=document.createElement('button');cl.textContent='关闭';
+  cl.style.cssText='flex:.4;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:12px 0;font-size:14px;cursor:pointer';
+  cl.onclick=function(){document.body.removeChild(ov);};
+  bot.appendChild(dl);bot.appendChild(cl);
+  ov.appendChild(top);ov.appendChild(sc);ov.appendChild(bot);
+  document.body.appendChild(ov);
 }
 
 function showToast(msg){
-  var t=document.createElement('div');
-  t.textContent=msg;
+  var t=document.createElement('div');t.textContent=msg;
   t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:99999;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.2)';
   document.body.appendChild(t);
   setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .5s';},2000);
